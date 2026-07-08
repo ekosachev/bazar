@@ -1,11 +1,16 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import logoImage from '@/assets/logo.png'
 import { RegisterForm } from '@/features/auth/components/register-form'
+import { useAuthStore } from '@/features/auth/store/auth-store'
 import type { RegisterPayload } from '@/features/auth/types'
 
 export function RegisterPage() {
+  const navigate = useNavigate()
+  const register = useAuthStore((state) => state.register)
+
   async function handleSubmit(payload: RegisterPayload) {
-    console.info('register submit', payload)
+    await register(payload)
+    navigate('/', { replace: true })
   }
 
   return (

@@ -1,11 +1,16 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import logoImage from '@/assets/logo.png'
 import { LoginForm } from '@/features/auth/components/login-form'
+import { useAuthStore } from '@/features/auth/store/auth-store'
 import type { LoginPayload } from '@/features/auth/types'
 
 export function LoginPage() {
+  const navigate = useNavigate()
+  const login = useAuthStore((state) => state.login)
+
   async function handleSubmit(payload: LoginPayload) {
-    console.info('login submit', payload)
+    await login(payload)
+    navigate('/', { replace: true })
   }
 
   return (
