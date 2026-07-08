@@ -3,8 +3,10 @@ package main
 import (
 	"net/http"
 
+	"github.com/ekosachev/bazar/internal/auth"
 	"github.com/ekosachev/bazar/internal/config"
 	"github.com/ekosachev/bazar/internal/database"
+	"github.com/ekosachev/bazar/internal/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,7 +17,7 @@ func main() {
 
 	appConfig := config.GetConfig()
 
-	_, err := database.ConnectToDb(database.DatabaseConfig{
+	db, err := database.ConnectToDb(database.DatabaseConfig{
 		Host:     appConfig.DBHost,
 		User:     appConfig.DBUser,
 		Password: appConfig.DBPassword,
@@ -25,6 +27,17 @@ func main() {
 	})
 	if err != nil {
 		return
+	}
+
+	userRepo := user.NewUserRepository(db)
+
+	authService := auth.NewAuthService(userRepo)
+
+	authRouter := auth.NewAuthRouter(authService)
+
+	group := r.Group("/api/v1")
+	{
+		authRouter.RegisterRoutes(group)
 	}
 
 	r.Run()
