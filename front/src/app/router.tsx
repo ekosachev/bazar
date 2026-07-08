@@ -1,10 +1,15 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/app-shell'
+import { RequireAuth } from '@/features/auth/components/require-auth'
 import { LoginPage } from '@/features/auth/pages/login-page'
 import { RegisterPage } from '@/features/auth/pages/register-page'
 
 function HomePage() {
-  return <AppShell />
+  return (
+    <RequireAuth>
+      <AppShell />
+    </RequireAuth>
+  )
 }
 
 export function AppRouter() {

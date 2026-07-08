@@ -1,5 +1,7 @@
 export { LoginForm } from './components/login-form'
+export { LogoutButton } from './components/logout-button'
 export { RegisterForm } from './components/register-form'
+export { RequireAuth } from './components/require-auth'
 export { LoginPage } from './pages/login-page'
 export { RegisterPage } from './pages/register-page'
 export { useAuthStore } from './store/auth-store'

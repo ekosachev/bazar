@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import logoImage from '@/assets/logo.png'
 import { LoginForm } from '@/features/auth/components/login-form'
 import { useAuthStore } from '@/features/auth/store/auth-store'
@@ -6,11 +6,16 @@ import type { LoginPayload } from '@/features/auth/types'
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const accessToken = useAuthStore((state) => state.accessToken)
   const login = useAuthStore((state) => state.login)
 
   async function handleSubmit(payload: LoginPayload) {
     await login(payload)
     navigate('/', { replace: true })
+  }
+
+  if (accessToken) {
+    return <Navigate to="/" replace />
   }
 
   return (
