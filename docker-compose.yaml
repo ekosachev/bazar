@@ -1,0 +1,36 @@
+services:
+  db:
+    build:
+      context: ./back
+      dockerfile: db.dockerfile
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./back
+      dockerfile: back.dockerfile
+    container_name: go_backend
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    # volumes:
+    #   - ./uploads:/app/uploads
+
+volumes:
+  postgres_data:
