@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ekosachev/bazar/internal/middleware"
 	"github.com/ekosachev/bazar/internal/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -28,7 +29,10 @@ func NewUserHandler(service *UserService) *UserHandler {
 func (r *UserHandler) RegisterRoutes(router *gin.RouterGroup) {
 	group := router.Group("/user")
 
-	group.GET("/:id", r.getByID)
+	accessTokenGroup := group.Group("/").Use(middleware.RequiresAccessToken())
+	{
+		accessTokenGroup.GET("/:id", r.getByID)
+	}
 }
 
 func (r *UserHandler) getByID(c *gin.Context) {

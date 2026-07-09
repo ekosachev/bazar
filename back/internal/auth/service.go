@@ -52,12 +52,12 @@ func (s *AuthService) Login(ctx context.Context, request LoginRequest) (*LoginRe
 		return nil, &ErrAuthFailed{}
 	}
 
-	accessToken, err := GenerateAccessToken(user.ID)
+	accessToken, err := utils.GenerateAccessToken(user.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	expTime, refreshToken, err := GenerateRefreshToken(user.ID)
+	expTime, refreshToken, err := utils.GenerateRefreshToken(user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -89,12 +89,12 @@ func (s *AuthService) Refresh(ctx context.Context, userIDString string, tokenIDS
 		return nil, err
 	}
 
-	accessToken, err := GenerateAccessToken(userID)
+	accessToken, err := utils.GenerateAccessToken(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	expTime, refreshToken, err := GenerateRefreshToken(userID)
+	expTime, refreshToken, err := utils.GenerateRefreshToken(userID)
 	if err != nil {
 		return nil, err
 	}
