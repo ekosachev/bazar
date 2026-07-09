@@ -5,18 +5,23 @@ import (
 	"errors"
 	"time"
 
+	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type UserModel struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Username     string
+	ID       uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Username string    `gorm:"unique"`
+
 	DisplayName  string
 	Email        string `gorm:"email"`
-	PasswordHash string
 	AvatarUrl    *string
-	CreatedAt    time.Time
+	PasswordHash string
+
+	RefreshTokens []refreshtoken.RefreshTokenModel
+
+	CreatedAt time.Time
 }
 
 type UserRepository struct {

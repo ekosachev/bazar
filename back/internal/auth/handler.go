@@ -22,6 +22,7 @@ func (r *AuthRouter) RegisterRoutes(router *gin.RouterGroup) {
 	group := router.Group("/auth")
 
 	group.POST("/register", r.register)
+	group.POST("/login", r.login)
 }
 
 func (r *AuthRouter) register(c *gin.Context) {
@@ -60,5 +61,30 @@ func (r *AuthRouter) register(c *gin.Context) {
 			AvatarUrl:   user.AvatarUrl,
 			CreatedAt:   user.CreatedAt.Format(time.RFC3339),
 		},
+	})
+}
+
+func (r *AuthRouter) login(c *gin.Context) {
+	var req LoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response, err := r.service.Login(c, req)
+	if err != nil {
+		var authFailedErr *ErrAuthFailed
+		if errors.As(err, &authFailedErr) {
+			utils.SendError(c, http.StatusUnauthorized, err.Error())
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    response,
 	})
 }
