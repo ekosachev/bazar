@@ -14,3 +14,5 @@ export type {
   WsSubscribedPayload,
   WsUnsubscribePayload,
 } from './types/ws-events'
+
+export { useActiveChatMessages, useMessagesStore } from './store/messages-store'
