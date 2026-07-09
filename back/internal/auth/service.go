@@ -119,3 +119,22 @@ func (s *AuthService) Refresh(ctx context.Context, userIDString string, tokenIDS
 		Refresh: refreshToken,
 	}, nil
 }
+
+func (s *AuthService) Logout(ctx context.Context, userIDString string) error {
+	userID, err := uuid.Parse(userIDString)
+	if err != nil {
+		return err
+	}
+
+	refreshToken, err := s.refreshTokenRepo.GetValidToken(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	err = s.refreshTokenRepo.RevokeToken(ctx, refreshToken.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
