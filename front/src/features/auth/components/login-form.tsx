@@ -1,10 +1,10 @@
 import { type FormEvent, useState } from 'react'
 import { Button, Input } from '@/components/ui'
-import { validateEmail, validatePassword } from '@/features/auth/lib/validation'
+import { validatePassword, validateUsername } from '@/features/auth/lib/validation'
 import type { LoginPayload } from '@/features/auth/types'
 
 interface FieldErrors {
-  email?: string
+  username?: string
   password?: string
 }
 
@@ -13,7 +13,7 @@ export interface LoginFormProps {
 }
 
 export function LoginForm({ onSubmit }: LoginFormProps) {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -23,16 +23,16 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
     event.preventDefault()
 
     const nextErrors: FieldErrors = {
-      email: validateEmail(email),
+      username: validateUsername(username),
       password: validatePassword(password),
     }
     setErrors(nextErrors)
-    if (nextErrors.email || nextErrors.password) return
+    if (nextErrors.username || nextErrors.password) return
 
     setFormError(null)
     setIsSubmitting(true)
     try {
-      await onSubmit({ email, password })
+      await onSubmit({ username, password })
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Не удалось войти')
     } finally {
@@ -43,18 +43,17 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   return (
     <form className="space-y-4" onSubmit={handleSubmit} noValidate>
       <div className="space-y-1.5">
-        <label className="text-caption text-content-muted" htmlFor="login-email">
-          Email
+        <label className="text-caption text-content-muted" htmlFor="login-username">
+          Имя пользователя
         </label>
         <Input
-          id="login-email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          aria-invalid={Boolean(errors.email)}
+          id="login-username"
+          autoComplete="username"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          aria-invalid={Boolean(errors.username)}
         />
-        {errors.email ? <p className="text-caption text-danger">{errors.email}</p> : null}
+        {errors.username ? <p className="text-caption text-danger">{errors.username}</p> : null}
       </div>
 
       <div className="space-y-1.5">

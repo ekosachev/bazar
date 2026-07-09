@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api'
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api/v1'
 
 export class ApiError extends Error {
   status: number
@@ -11,6 +11,12 @@ export class ApiError extends Error {
 
 export interface ApiFetchOptions extends RequestInit {
   skipAuth?: boolean
+}
+
+interface ApiEnvelope<T> {
+  success: boolean
+  result?: T
+  error?: string
 }
 
 interface ApiClientConfig {
@@ -62,14 +68,11 @@ export async function apiFetch<T = unknown>(path: string, options: ApiFetchOptio
     response = await send(path, options, refreshedToken)
   }
 
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText)
-    throw new ApiError(response.status, message || 'Request failed')
+  const envelope = (await response.json().catch(() => null)) as ApiEnvelope<T> | null
+
+  if (!response.ok || !envelope || !envelope.success) {
+    throw new ApiError(response.status, envelope?.error || response.statusText || 'Request failed')
   }
 
-  if (response.status === 204) {
-    return undefined as T
-  }
-
-  return (await response.json()) as T
+  return envelope.result as T
 }
