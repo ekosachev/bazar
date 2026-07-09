@@ -32,6 +32,7 @@ func (r *AuthRouter) RegisterRoutes(router *gin.RouterGroup) {
 	accessTokenGroup := group.Group("/").Use(RequiresAccessToken())
 	{
 		accessTokenGroup.GET("/logout", r.logout)
+		accessTokenGroup.GET("/me", r.getMyID)
 	}
 }
 
@@ -124,4 +125,8 @@ func (r *AuthRouter) logout(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, utils.APIResponse{Success: true})
+}
+
+func (r *AuthRouter) getMyID(c *gin.Context) {
+	c.JSON(http.StatusOK, utils.APIResponse{Success: true, Data: map[string]string{"user_id": c.GetString("userID")}})
 }
