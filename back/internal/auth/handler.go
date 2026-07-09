@@ -23,6 +23,11 @@ func (r *AuthRouter) RegisterRoutes(router *gin.RouterGroup) {
 
 	group.POST("/register", r.register)
 	group.POST("/login", r.login)
+
+	refreshTokenGroup := group.Group("/").Use(RequiresRefreshToken(r.service.refreshTokenRepo))
+	{
+		refreshTokenGroup.GET("/refresh", r.refresh)
+	}
 }
 
 func (r *AuthRouter) register(c *gin.Context) {
@@ -86,5 +91,21 @@ func (r *AuthRouter) login(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.APIResponse{
 		Success: true,
 		Data:    response,
+	})
+}
+
+func (r *AuthRouter) refresh(c *gin.Context) {
+	userID := c.GetString("userID")
+	tokenID := c.GetString("tokenID")
+
+	loginResponse, err := r.service.Refresh(c, userID, tokenID)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    loginResponse,
 	})
 }

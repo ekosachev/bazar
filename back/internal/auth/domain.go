@@ -17,7 +17,7 @@ func (e *ErrUsernameTaken) Error() string {
 type ErrAuthFailed struct{}
 
 func (e *ErrAuthFailed) Error() string {
-	return fmt.Sprintf("Authentication failed")
+	return "Authentication failed"
 }
 
 type RegistractionRequest struct {

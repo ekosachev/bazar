@@ -6,6 +6,7 @@ import (
 	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/ekosachev/bazar/internal/user"
 	"github.com/ekosachev/bazar/internal/utils"
+	"github.com/google/uuid"
 )
 
 type AuthService struct {
@@ -68,6 +69,48 @@ func (s *AuthService) Login(ctx context.Context, request LoginRequest) (*LoginRe
 		Revoked:   false,
 	}
 	if err = s.refreshTokenRepo.Create(ctx, &refreshTokenDto); err != nil {
+		return nil, err
+	}
+
+	return &LoginResponse{
+		Access:  accessToken,
+		Refresh: refreshToken,
+	}, nil
+}
+
+func (s *AuthService) Refresh(ctx context.Context, userIDString string, tokenIDString string) (*LoginResponse, error) {
+	userID, err := uuid.Parse(userIDString)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenID, err := uuid.Parse(tokenIDString)
+	if err != nil {
+		return nil, err
+	}
+
+	accessToken, err := GenerateAccessToken(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	expTime, refreshToken, err := GenerateRefreshToken(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshTokenDto := refreshtoken.RefreshTokenDTO{
+		UserID:    userID,
+		Token:     refreshToken,
+		ExpiresAt: expTime,
+		Revoked:   false,
+	}
+	if err = s.refreshTokenRepo.Create(ctx, &refreshTokenDto); err != nil {
+		return nil, err
+	}
+
+	err = s.refreshTokenRepo.RevokeToken(ctx, tokenID)
+	if err != nil {
 		return nil, err
 	}
 

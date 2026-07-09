@@ -72,3 +72,23 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*U
 		CreatedAt:    user.CreatedAt,
 	}, nil
 }
+
+func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*UserDTO, error) {
+	user, err := gorm.G[UserModel](r.db).Where(UserModel{ID: userID}).First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &UserDTO{
+		ID:           user.ID,
+		Username:     user.Username,
+		DisplayName:  user.DisplayName,
+		Email:        user.Email,
+		PasswordHash: user.PasswordHash,
+		AvatarUrl:    user.AvatarUrl,
+		CreatedAt:    user.CreatedAt,
+	}, nil
+}
