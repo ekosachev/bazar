@@ -1,7 +1,5 @@
-import type { User } from '@/types/chat'
-
 export interface LoginPayload {
-  email: string
+  username: string
   password: string
 }
 
@@ -15,9 +13,4 @@ export interface RegisterPayload {
 export interface AuthTokens {
   accessToken: string
   refreshToken: string
-}
-
-export interface AuthResponse {
-  user: User
-  tokens: AuthTokens
 }
