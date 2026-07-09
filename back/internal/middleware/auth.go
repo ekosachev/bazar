@@ -1,4 +1,4 @@
-package auth
+package middleware
 
 import (
 	"net/http"
@@ -18,7 +18,7 @@ func RequiresAccessToken() gin.HandlerFunc {
 
 		tokenString := authHeader[7:] // remove "Bearer: " prefix
 
-		if ok, userID := VerifyAccessToken(tokenString); ok && userID != nil {
+		if ok, userID := utils.VerifyAccessToken(tokenString); ok && userID != nil {
 			ctx.Set("userID", userID.String())
 			ctx.Next()
 		} else {
@@ -35,7 +35,7 @@ func RequiresRefreshToken(refreshTokenRepo *refreshtoken.RefreshTokenRepository)
 			return
 		}
 
-		if ok, userID := VerifyRefreshToken(tokenString); ok && userID != nil {
+		if ok, userID := utils.VerifyRefreshToken(tokenString); ok && userID != nil {
 			validToken, err := refreshTokenRepo.GetValidToken(ctx, *userID)
 			if err != nil || validToken == nil {
 				ctx.AbortWithStatusJSON(http.StatusUnauthorized, utils.APIResponse{Success: false, Error: "Unauthorized"})

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ekosachev/bazar/internal/middleware"
 	"github.com/ekosachev/bazar/internal/user"
 	"github.com/ekosachev/bazar/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -24,12 +25,12 @@ func (r *AuthRouter) RegisterRoutes(router *gin.RouterGroup) {
 	group.POST("/register", r.register)
 	group.POST("/login", r.login)
 
-	refreshTokenGroup := group.Group("/").Use(RequiresRefreshToken(r.service.refreshTokenRepo))
+	refreshTokenGroup := group.Group("/").Use(middleware.RequiresRefreshToken(r.service.refreshTokenRepo))
 	{
 		refreshTokenGroup.GET("/refresh", r.refresh)
 	}
 
-	accessTokenGroup := group.Group("/").Use(RequiresAccessToken())
+	accessTokenGroup := group.Group("/").Use(middleware.RequiresAccessToken())
 	{
 		accessTokenGroup.GET("/logout", r.logout)
 		accessTokenGroup.GET("/me", r.getMyID)
