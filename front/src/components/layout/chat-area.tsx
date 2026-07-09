@@ -1,7 +1,6 @@
 import { Button, IconButton, Input, SearchIcon } from '@/components/ui'
 import { mockMessages } from '@/features/chats/data/mock-chats'
 import { MessageList } from '@/features/messages/components/message-list'
-import { MessageBubble } from '@/features/messages/components/message-bubble'
 
 export function ChatArea() {
   return (
@@ -17,11 +16,6 @@ export function ChatArea() {
       </header>
 
       <MessageList messages={mockMessages} showSender />
-      <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-        {mockMessages.map((message) => (
-          <MessageBubble key={message.id} message={message} showSender />
-        ))}
-      </div>
 
       <footer className="border-t border-border px-5 py-4">
         <form
