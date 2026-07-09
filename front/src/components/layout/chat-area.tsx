@@ -4,6 +4,7 @@ import { mockMessages } from '@/features/chats/data/mock-chats'
 import { ConnectionStatus } from '@/features/messages/components/connection-status'
 import { MessageComposer } from '@/features/messages/components/message-composer'
 import { MessageList } from '@/features/messages/components/message-list'
+import { useMessageEvents } from '@/features/messages/hooks/use-message-events'
 import { useSendMessage } from '@/features/messages/hooks/use-send-message'
 import {
   useActiveChatMessages,
@@ -17,6 +18,8 @@ export function ChatArea() {
   const setMessages = useMessagesStore((state) => state.setMessages)
   const messages = useActiveChatMessages()
   const { sendMessage } = useSendMessage(ACTIVE_CHAT_ID)
+
+  useMessageEvents(ACTIVE_CHAT_ID)
 
   useEffect(() => {
     setActiveChatId(ACTIVE_CHAT_ID)
