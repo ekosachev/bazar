@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { IconButton, SearchIcon } from '@/components/ui'
 import { mockMessages } from '@/features/chats/data/mock-chats'
+import { ConnectionStatus } from '@/features/messages/components/connection-status'
 import { MessageComposer } from '@/features/messages/components/message-composer'
 import { MessageList } from '@/features/messages/components/message-list'
 import { useSendMessage } from '@/features/messages/hooks/use-send-message'
@@ -31,7 +32,11 @@ export function ChatArea() {
       <header className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
         <div className="min-w-0">
           <h2 className="truncate font-display text-title text-content">Базар «Малина»</h2>
-          <p className="text-caption text-content-faint">4 участника</p>
+          <div className="flex items-center gap-2 text-caption text-content-faint">
+            <span>4 участника</span>
+            <span aria-hidden>·</span>
+            <ConnectionStatus />
+          </div>
         </div>
         <IconButton label="Поиск по сообщениям">
           <SearchIcon />
