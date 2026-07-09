@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -48,4 +49,18 @@ type ChatResponse struct {
 
 	CreatedBy string `json:"created_by"`
 	CreatedAt string `json:"created_at"`
+}
+
+type CreateChatRequest struct {
+	Type        string `json:"type"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+type ErrInvalidChatType struct {
+	Value string
+}
+
+func (e *ErrInvalidChatType) Error() string {
+	return fmt.Sprintf("%s is not a valid chat type", e.Value)
 }
