@@ -8,6 +8,7 @@ interface MessagesState {
   setActiveChatId: (chatId: string | null) => void
   setMessages: (chatId: string, messages: Message[]) => void
   addMessage: (message: Message) => void
+  replaceMessage: (chatId: string, messageId: string, message: Message) => void
   prependMessages: (chatId: string, messages: Message[]) => void
   getMessages: (chatId: string) => Message[]
   clearChat: (chatId: string) => void
@@ -48,6 +49,21 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
         messagesByChatId: {
           ...state.messagesByChatId,
           [message.chatId]: mergeMessages(current, [message], 'end'),
+        },
+      }
+    }),
+
+  replaceMessage: (chatId, messageId, message) =>
+    set((state) => {
+      const current = state.messagesByChatId[chatId] ?? []
+      const hasMessage = current.some((item) => item.id === messageId)
+
+      return {
+        messagesByChatId: {
+          ...state.messagesByChatId,
+          [chatId]: hasMessage
+            ? current.map((item) => (item.id === messageId ? message : item))
+            : mergeMessages(current, [message], 'end'),
         },
       }
     }),

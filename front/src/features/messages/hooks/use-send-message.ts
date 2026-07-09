@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { useAuthStore } from '@/features/auth/store/auth-store'
+import { useSocket } from '@/features/messages/hooks/use-socket'
 import { useMessagesStore } from '@/features/messages/store/messages-store'
 import type { Message } from '@/types/chat'
 
@@ -10,9 +11,14 @@ function formatMessageTime(date: Date) {
   })
 }
 
-function createOptimisticMessage(chatId: string, content: string, senderId: string): Message {
+function createOptimisticMessage(
+  chatId: string,
+  content: string,
+  senderId: string,
+  clientMessageId: string,
+): Message {
   return {
-    id: `local-${crypto.randomUUID()}`,
+    id: `local-${clientMessageId}`,
     chatId,
     senderId,
     content,
@@ -24,12 +30,29 @@ function createOptimisticMessage(chatId: string, content: string, senderId: stri
 export function useSendMessage(chatId: string) {
   const addMessage = useMessagesStore((state) => state.addMessage)
   const senderId = useAuthStore((state) => state.user?.id ?? 'me')
+  const { send } = useSocket()
 
   const sendMessage = useCallback(
     (content: string) => {
-      addMessage(createOptimisticMessage(chatId, content, senderId))
+      const clientMessageId = crypto.randomUUID()
+      const optimisticMessage = createOptimisticMessage(
+        chatId,
+        content,
+        senderId,
+        clientMessageId,
+      )
+
+      addMessage(optimisticMessage)
+      send({
+        type: 'send_message',
+        payload: {
+          chatId,
+          content,
+          clientMessageId,
+        },
+      })
     },
-    [addMessage, chatId, senderId],
+    [addMessage, chatId, send, senderId],
   )
 
   return { sendMessage }
