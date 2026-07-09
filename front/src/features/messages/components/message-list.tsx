@@ -1,4 +1,5 @@
 import { MessageBubble } from '@/features/messages/components/message-bubble'
+import { useAutoScroll } from '@/features/messages/hooks/use-auto-scroll'
 import type { Message } from '@/types/chat'
 
 export interface MessageListProps {
@@ -7,6 +8,8 @@ export interface MessageListProps {
 }
 
 export function MessageList({ messages, showSender = false }: MessageListProps) {
+  const containerRef = useAutoScroll(messages)
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center px-5 py-4">
@@ -16,7 +19,7 @@ export function MessageList({ messages, showSender = false }: MessageListProps) 
   }
 
   return (
-    <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+    <div ref={containerRef} className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} showSender={showSender} />
       ))}
