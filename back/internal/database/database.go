@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/ekosachev/bazar/internal/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -35,6 +36,7 @@ func ConnectToDb(config DatabaseConfig) (*gorm.DB, error) {
 
 	db.AutoMigrate(
 		&user.UserModel{},
+		&refreshtoken.RefreshTokenModel{},
 	)
 
 	return db, nil

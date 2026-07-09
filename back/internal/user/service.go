@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,4 +23,13 @@ type UserService struct {
 
 func NewUserService(repo *UserRepository) *UserService {
 	return &UserService{repo: repo}
+}
+
+func (s *UserService) GetByID(ctx context.Context, userIDString string) (*UserDTO, error) {
+	userID, err := uuid.Parse(userIDString)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetByID(ctx, userID)
 }
