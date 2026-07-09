@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ekosachev/bazar/internal/chat"
 	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -20,6 +21,7 @@ type UserModel struct {
 	PasswordHash string
 
 	RefreshTokens []refreshtoken.RefreshTokenModel
+	CreatedChats  []chat.ChatModel `gorm:"foreignKey:CreatedBy"`
 
 	CreatedAt time.Time
 }
