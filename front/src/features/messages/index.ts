@@ -16,4 +16,7 @@ export type {
 } from './types/ws-events'
 
 export { useActiveChatMessages, useMessagesStore } from './store/messages-store'
-// WebSocket provider, reconnect, event dispatch — real-time layer
+export { useMessageEvents } from './hooks/use-message-events'
+export { useSendMessage } from './hooks/use-send-message'
+export { useSocket } from './hooks/use-socket'
+export { SocketProvider } from './providers/socket-provider'
