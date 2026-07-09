@@ -1,3 +1,4 @@
+// Auth screens, token storage, route guards — second frontend developer
 export { LoginForm } from './components/login-form'
 export { LogoutButton } from './components/logout-button'
 export { RegisterForm } from './components/register-form'

@@ -1,3 +1,11 @@
+import { useState } from 'react'
+import { IconButton, Input, PlusIcon } from '@/components/ui'
+import { Logo } from '@/components/layout/logo'
+import { ChatListItem } from '@/features/chats/components/chat-list-item'
+import { mockChats } from '@/features/chats/data/mock-chats'
+
+export function Sidebar() {
+  const [activeChatId, setActiveChatId] = useState(mockChats[0]?.id)
 import { useMemo, useState } from 'react'
 import { IconButton, Input, PlusIcon } from '@/components/ui'
 import { Logo } from '@/components/layout/logo'
@@ -26,6 +34,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3" aria-label="Список чатов">
+        {mockChats.map((chat) => (
         {sortedChats.map((chat) => (
           <ChatListItem
             key={chat.id}

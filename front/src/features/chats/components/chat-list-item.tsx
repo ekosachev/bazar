@@ -1,4 +1,5 @@
 import { Avatar, Badge } from '@/components/ui'
+import { getChatTypeLabel } from '@/features/chats/lib/chat-labels'
 import { ChatTypeIcon } from '@/features/chats/components/chat-type-icon'
 import { getChatTypeLabel } from '@/features/chats/lib/chat-labels'
 import { formatChatTimestamp } from '@/features/chats/lib/format-time'
@@ -23,6 +24,11 @@ export function ChatListItem({ chat, active = false, onSelect }: ChatListItemPro
         active ? 'bg-bg-hover' : 'hover:bg-bg-hover/70',
       )}
     >
+      <Avatar
+        name={chat.title}
+        size="lg"
+        online={chat.type === 'direct' ? chat.isOnline : undefined}
+      />
       <div className="relative shrink-0">
         <Avatar
           name={chat.title}
@@ -41,6 +47,7 @@ export function ChatListItem({ chat, active = false, onSelect }: ChatListItemPro
             ) : null}
           </div>
           {chat.lastMessageAt ? (
+            <span className="shrink-0 text-caption text-content-faint">{chat.lastMessageAt}</span>
             <span className="shrink-0 text-caption text-content-faint">
               {formatChatTimestamp(chat.lastMessageAt)}
             </span>
