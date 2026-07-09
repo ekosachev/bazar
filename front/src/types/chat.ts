@@ -12,6 +12,7 @@ export interface Chat {
   type: ChatType
   title: string
   lastMessage?: string
+  /** ISO 8601 timestamp of the last message, used for display formatting and activity sorting. */
   lastMessageAt?: string
   unreadCount?: number
   isOnline?: boolean
