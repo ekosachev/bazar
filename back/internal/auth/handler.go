@@ -44,14 +44,14 @@ func (r *AuthRouter) register(c *gin.Context) {
 		return
 	}
 
-	user := user.UserDTO{
+	userDTO := user.UserDTO{
 		Username:     req.Username,
 		DisplayName:  req.DisplayName,
 		Email:        req.Email,
 		PasswordHash: req.Password,
 	}
 
-	if err := r.service.Register(c, &user); err != nil {
+	if err := r.service.Register(c, &userDTO); err != nil {
 		var usernameTakenErr *ErrUsernameTaken
 		if errors.As(err, &usernameTakenErr) {
 			utils.SendError(c, http.StatusConflict, usernameTakenErr.Error())
@@ -64,13 +64,13 @@ func (r *AuthRouter) register(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, utils.APIResponse{
 		Success: true,
-		Data: UserResponse{
-			ID:          user.ID,
-			Username:    user.Username,
-			DisplayName: user.DisplayName,
-			Email:       user.Email,
-			AvatarUrl:   user.AvatarUrl,
-			CreatedAt:   user.CreatedAt.Format(time.RFC3339),
+		Data: user.UserResponse{
+			ID:          userDTO.ID.String(),
+			Username:    userDTO.Username,
+			DisplayName: userDTO.DisplayName,
+			Email:       userDTO.Email,
+			AvatarUrl:   userDTO.AvatarUrl,
+			CreatedAt:   userDTO.CreatedAt.Format(time.RFC3339),
 		},
 	})
 }

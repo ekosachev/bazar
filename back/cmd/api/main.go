@@ -34,12 +34,15 @@ func main() {
 	refreshTokenRepo := refreshtoken.NewRefreshTokenRepository(db)
 
 	authService := auth.NewAuthService(userRepo, refreshTokenRepo)
+	userService := user.NewUserService(userRepo)
 
 	authRouter := auth.NewAuthRouter(authService)
+	userHandler := user.NewUserHandler(userService)
 
 	group := r.Group("/api/v1")
 	{
 		authRouter.RegisterRoutes(group)
+		userHandler.RegisterRoutes(group)
 	}
 
 	r.Run()
