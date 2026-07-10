@@ -35,6 +35,11 @@ func ConnectToDb(config DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	err = db.SetupJoinTable(&user.UserModel{}, "ChatModels", &chat.ChatMemberModel{})
+	if err != nil {
+		return nil, err
+	}
+
 	db.AutoMigrate(
 		&user.UserModel{},
 		&refreshtoken.RefreshTokenModel{},

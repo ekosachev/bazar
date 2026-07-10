@@ -32,3 +32,20 @@ func (r *ChatRepository) Create(ctx context.Context, chat *ChatDTO) error {
 	chat.CreatedAt = chatModel.CreatedAt
 	return nil
 }
+
+func (r *ChatRepository) AddUserToChat(ctx context.Context, chatMember *ChatMemberDTO) error {
+	chatMemberModel := ChatMemberModel{
+		ChatModelID: chatMember.ChatModelID,
+		UserModelID: chatMember.UserModelID,
+		Role:        chatMember.Role,
+		InvitedBy:   chatMember.InvitedBy,
+	}
+
+	err := gorm.G[ChatMemberModel](r.db).Create(ctx, &chatMemberModel)
+	if err != nil {
+		return err
+	}
+
+	chatMember.CreatedAt = chatMemberModel.CreatedAt
+	return nil
+}

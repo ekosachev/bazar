@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/ekosachev/bazar/internal/auth"
@@ -28,6 +29,7 @@ func main() {
 		TimeZone: appConfig.DBTimezone,
 	})
 	if err != nil {
+		log.Fatalf("Error when initializing database: %s", err.Error())
 		return
 	}
 

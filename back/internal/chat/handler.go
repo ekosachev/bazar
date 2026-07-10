@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/ekosachev/bazar/internal/middleware"
@@ -22,27 +21,63 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 	{
 		accessTokenGroup := chatGroup.Group("/").Use(middleware.RequiresAccessToken())
 		{
-			accessTokenGroup.POST("/", h.create)
+			accessTokenGroup.POST("/direct", h.createDirectChat)
+			accessTokenGroup.POST("/group", h.createGroupChat)
+			accessTokenGroup.POST("/channel", h.createChannelChat)
 		}
 	}
 }
 
-func (h *ChatHandler) create(c *gin.Context) {
-	var req CreateChatRequest
-
+func (h *ChatHandler) createDirectChat(c *gin.Context) {
+	var req CreateDirectChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	response, err := h.service.Create(c, req, c.GetString("userID"))
+	creatorID := c.GetString("userID")
+	response, err := h.service.CreateDirectChat(c, req, creatorID)
 	if err != nil {
-		var invalidChatType *ErrInvalidChatType
-		if errors.As(err, &invalidChatType) {
-			utils.SendError(c, http.StatusBadRequest, err.Error())
-			return
-		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
 
+	c.JSON(http.StatusCreated, utils.APIResponse{
+		Success: true,
+		Data:    response,
+	})
+}
+
+func (h *ChatHandler) createGroupChat(c *gin.Context) {
+	var req CreateGroupChatRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	creatorID := c.GetString("userID")
+	response, err := h.service.CreateGroupChat(c, req, creatorID)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusCreated, utils.APIResponse{
+		Success: true,
+		Data:    response,
+	})
+}
+
+func (h *ChatHandler) createChannelChat(c *gin.Context) {
+	var req CreateChannelChatRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	creatorID := c.GetString("userID")
+	response, err := h.service.CreateChannelChat(c, req, creatorID)
+	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}

@@ -22,6 +22,7 @@ type UserModel struct {
 
 	RefreshTokens []refreshtoken.RefreshTokenModel
 	CreatedChats  []chat.ChatModel `gorm:"foreignKey:CreatedBy"`
+	ChatModels    []chat.ChatModel `gorm:"many2many:chat_member_models;"`
 
 	CreatedAt time.Time
 }
