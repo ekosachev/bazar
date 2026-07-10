@@ -82,6 +82,17 @@ type ChatResponse struct {
 	CreatedAt string `json:"created_at"`
 }
 
+type ChatMemberResponse struct {
+	ChatModelID uuid.UUID `json:"chat_id"`
+	UserModelID uuid.UUID `json:"user_id"`
+
+	Role              ChatMemberRole `json:"role"`
+	LastReadMessageID *uuid.UUID     `json:"last_read_message_id"`
+
+	InvitedBy uuid.UUID `json:"invited_by"`
+	CreatedAt string    `json:"created_at"`
+}
+
 type CreateDirectChatRequest struct {
 	TargetUserID string `json:"target_user_id"`
 }
