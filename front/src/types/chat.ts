@@ -16,6 +16,12 @@ export interface Chat {
   lastMessageAt?: string
   unreadCount?: number
   isOnline?: boolean
+  /** Group chat ("базар") member ids. */
+  participantIds?: string[]
+  /** Channel ("точка") description. */
+  description?: string
+  /** Direct chat ("1-на-1") counterpart user id. */
+  peerUserId?: string
 }
 
 export interface Message {
