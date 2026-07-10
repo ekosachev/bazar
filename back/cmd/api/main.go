@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ekosachev/bazar/internal/auth"
+	"github.com/ekosachev/bazar/internal/chat"
 	"github.com/ekosachev/bazar/internal/config"
 	"github.com/ekosachev/bazar/internal/database"
 	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
@@ -32,17 +33,21 @@ func main() {
 
 	userRepo := user.NewUserRepository(db)
 	refreshTokenRepo := refreshtoken.NewRefreshTokenRepository(db)
+	chatRepo := chat.NewChatRepository(db)
 
 	authService := auth.NewAuthService(userRepo, refreshTokenRepo)
 	userService := user.NewUserService(userRepo)
+	chatService := chat.NewChatService(chatRepo)
 
 	authRouter := auth.NewAuthRouter(authService)
 	userHandler := user.NewUserHandler(userService)
+	chatHandler := chat.NewChatHandler(chatService)
 
 	group := r.Group("/api/v1")
 	{
 		authRouter.RegisterRoutes(group)
 		userHandler.RegisterRoutes(group)
+		chatHandler.RegisterRoutes(group)
 	}
 
 	r.Run()

@@ -17,7 +17,7 @@ func NewChatHandler(service *ChatService) *ChatHandler {
 	return &ChatHandler{service: service}
 }
 
-func (h *ChatHandler) RegisterRoutes(group gin.RouterGroup) {
+func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 	chatGroup := group.Group("/chat")
 	{
 		accessTokenGroup := chatGroup.Group("/").Use(middleware.RequiresAccessToken())
