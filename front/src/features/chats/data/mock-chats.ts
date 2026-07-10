@@ -7,6 +7,8 @@ export const mockChats: Chat[] = [
     title: 'Базар «Баклажан»',
     lastMessage: 'Собираемся в субботу',
     lastMessageAt: '2026-07-04T18:20:00',
+    participantIds: ['u3', 'u5'],
+    adminIds: ['u3'],
   },
   {
     id: '1',
@@ -15,6 +17,8 @@ export const mockChats: Chat[] = [
     lastMessage: 'Марина: скинь адрес точки',
     lastMessageAt: '2026-07-09T12:52:00',
     unreadCount: 3,
+    participantIds: ['u2', 'u3', 'u4'],
+    adminIds: ['u2'],
   },
   {
     id: '5',
