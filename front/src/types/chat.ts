@@ -20,6 +20,8 @@ export interface Chat {
   participantIds?: string[]
   /** Channel ("точка") description. */
   description?: string
+  /** Direct chat ("1-на-1") counterpart user id. */
+  peerUserId?: string
 }
 
 export interface Message {
