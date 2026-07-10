@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 
+	"github.com/ekosachev/bazar/internal/chat"
 	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/ekosachev/bazar/internal/user"
 	"gorm.io/driver/postgres"
@@ -34,9 +35,15 @@ func ConnectToDb(config DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	err = db.SetupJoinTable(&user.UserModel{}, "ChatModels", &chat.ChatMemberModel{})
+	if err != nil {
+		return nil, err
+	}
+
 	db.AutoMigrate(
 		&user.UserModel{},
 		&refreshtoken.RefreshTokenModel{},
+		&chat.ChatModel{},
 	)
 
 	return db, nil
