@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ekosachev/bazar/internal/chat"
 	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -20,6 +21,8 @@ type UserModel struct {
 	PasswordHash string
 
 	RefreshTokens []refreshtoken.RefreshTokenModel
+	CreatedChats  []chat.ChatModel `gorm:"foreignKey:CreatedBy"`
+	ChatModels    []chat.ChatModel `gorm:"many2many:chat_member_models;"`
 
 	CreatedAt time.Time
 }
@@ -91,4 +94,27 @@ func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*UserDT
 		AvatarUrl:    user.AvatarUrl,
 		CreatedAt:    user.CreatedAt,
 	}, nil
+}
+
+func (r *UserRepository) GetUserChats(ctx context.Context, userID uuid.UUID) ([]chat.ChatMemberDTO, error) {
+	var chatMembers []chat.ChatMemberModel
+
+	err := r.db.Where("user_model_id = ?", userID).Find(&chatMembers).Error
+	if err != nil {
+		return []chat.ChatMemberDTO{}, err
+	}
+
+	result := make([]chat.ChatMemberDTO, len(chatMembers))
+	for i, cm := range chatMembers {
+		result[i] = chat.ChatMemberDTO{
+			ChatModelID:       cm.ChatModelID,
+			UserModelID:       cm.UserModelID,
+			Role:              cm.Role,
+			LastReadMessageID: cm.LastReadMessageID,
+			InvitedBy:         cm.InvitedBy,
+			CreatedAt:         cm.CreatedAt,
+		}
+	}
+
+	return result, nil
 }

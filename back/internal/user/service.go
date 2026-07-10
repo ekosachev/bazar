@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ekosachev/bazar/internal/chat"
 	"github.com/google/uuid"
 )
 
@@ -32,4 +33,13 @@ func (s *UserService) GetByID(ctx context.Context, userIDString string) (*UserDT
 	}
 
 	return s.repo.GetByID(ctx, userID)
+}
+
+func (s *UserService) GetUserChats(ctx context.Context, userIDString string) ([]chat.ChatMemberDTO, error) {
+	userID, err := uuid.Parse(userIDString)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.GetUserChats(ctx, userID)
 }
