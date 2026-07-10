@@ -24,6 +24,7 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
   const addParticipant = useChatsStore((state) => state.addParticipant)
   const removeParticipant = useChatsStore((state) => state.removeParticipant)
   const currentUserId = useAuthStore((state) => state.user?.id)
+  const isAdmin = Boolean(chat && currentUserId && chat.adminIds?.includes(currentUserId))
 
   const [isAddingOpen, setIsAddingOpen] = useState(false)
 
@@ -52,50 +53,54 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
               <span className="min-w-0 flex-1 truncate text-body text-content">
                 {user.displayName}
               </span>
-              <IconButton
-                label={`Удалить ${user.displayName}`}
-                variant="danger"
-                onClick={() => {
-                  if (!chat) return
-                  removeParticipant(chat.id, user.id)
-                  if (user.id === currentUserId) handleClose()
-                }}
-              >
-                <RemoveIcon />
-              </IconButton>
+              {isAdmin || user.id === currentUserId ? (
+                <IconButton
+                  label={user.id === currentUserId ? 'Выйти из базара' : `Удалить ${user.displayName}`}
+                  variant="danger"
+                  onClick={() => {
+                    if (!chat) return
+                    removeParticipant(chat.id, user.id)
+                    if (user.id === currentUserId) handleClose()
+                  }}
+                >
+                  <RemoveIcon />
+                </IconButton>
+              ) : null}
             </li>
           ))}
         </ul>
       )}
 
-      <div className="mt-4 border-t border-border pt-4">
-        {isAddingOpen ? (
-          candidates.length === 0 ? (
-            <p className="text-body text-content-muted">Все пользователи уже в базаре</p>
+      {isAdmin ? (
+        <div className="mt-4 border-t border-border pt-4">
+          {isAddingOpen ? (
+            candidates.length === 0 ? (
+              <p className="text-body text-content-muted">Все пользователи уже в базаре</p>
+            ) : (
+              <ul className="max-h-48 space-y-0.5 overflow-y-auto">
+                {candidates.map((user) => (
+                  <li key={user.id}>
+                    <button
+                      type="button"
+                      onClick={() => chat && addParticipant(chat.id, user.id)}
+                      className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-hover/70"
+                    >
+                      <Avatar name={user.displayName} size="sm" />
+                      <span className="min-w-0 flex-1 truncate text-body text-content">
+                        {user.displayName}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
           ) : (
-            <ul className="max-h-48 space-y-0.5 overflow-y-auto">
-              {candidates.map((user) => (
-                <li key={user.id}>
-                  <button
-                    type="button"
-                    onClick={() => chat && addParticipant(chat.id, user.id)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-hover/70"
-                  >
-                    <Avatar name={user.displayName} size="sm" />
-                    <span className="min-w-0 flex-1 truncate text-body text-content">
-                      {user.displayName}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )
-        ) : (
-          <Button variant="secondary" className="w-full" onClick={() => setIsAddingOpen(true)}>
-            Добавить участника
-          </Button>
-        )}
-      </div>
+            <Button variant="secondary" className="w-full" onClick={() => setIsAddingOpen(true)}>
+              Добавить участника
+            </Button>
+          )}
+        </div>
+      ) : null}
     </Modal>
   )
 }
