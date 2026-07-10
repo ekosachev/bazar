@@ -6,6 +6,7 @@ import (
 	"github.com/ekosachev/bazar/internal/middleware"
 	"github.com/ekosachev/bazar/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type ChatHandler struct {
@@ -21,6 +22,7 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 	{
 		accessTokenGroup := chatGroup.Group("/").Use(middleware.RequiresAccessToken())
 		{
+			accessTokenGroup.GET("/:id", h.getByID)
 			accessTokenGroup.POST("/direct", h.createDirectChat)
 			accessTokenGroup.POST("/group", h.createGroupChat)
 			accessTokenGroup.POST("/channel", h.createChannelChat)
@@ -85,5 +87,26 @@ func (h *ChatHandler) createChannelChat(c *gin.Context) {
 	c.JSON(http.StatusCreated, utils.APIResponse{
 		Success: true,
 		Data:    response,
+	})
+}
+
+func (h *ChatHandler) getByID(c *gin.Context) {
+	idString := c.Param("id")
+
+	id, err := uuid.Parse(idString)
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Chat ID must be a valid UUID string")
+		return
+	}
+
+	chat, err := h.service.GetByID(c, id)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    chat,
 	})
 }

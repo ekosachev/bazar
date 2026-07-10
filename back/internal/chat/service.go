@@ -3,7 +3,6 @@ package chat
 import (
 	"context"
 	"errors"
-	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -134,6 +133,23 @@ func (s *ChatService) CreateChannelChat(
 	}, nil
 }
 
+func (s *ChatService) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatResponse, error) {
+	chatDTO, err := s.repo.GetByID(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ChatResponse{
+		ID:          chatDTO.ID.String(),
+		Type:        string(chatDTO.Type),
+		Title:       chatDTO.Title,
+		Description: chatDTO.Description,
+		AvatarURL:   chatDTO.AvatarURL,
+		CreatedBy:   chatDTO.CreatedBy.String(),
+		CreatedAt:   chatDTO.CreatedAt.Format(time.RFC3339),
+	}, nil
+}
+
 func (s *ChatService) addUserToChat(
 	ctx context.Context,
 	chatID uuid.UUID,
@@ -155,10 +171,4 @@ func (s *ChatService) addUserToChat(
 		}
 	}
 	return nil
-}
-
-func validateChatType(chatType string) bool {
-	validTypes := []ChatType{ChatDirect, ChatGroup, ChatChannel}
-
-	return slices.Contains(validTypes, ChatType(chatType))
 }

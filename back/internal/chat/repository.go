@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -48,4 +49,21 @@ func (r *ChatRepository) AddUserToChat(ctx context.Context, chatMember *ChatMemb
 
 	chatMember.CreatedAt = chatMemberModel.CreatedAt
 	return nil
+}
+
+func (r *ChatRepository) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatDTO, error) {
+	chatModel, err := gorm.G[ChatModel](r.db).Where("id = ?", chatID).First(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ChatDTO{
+		ID:          chatModel.ID,
+		Type:        chatModel.Type,
+		Title:       chatModel.Title,
+		Description: chatModel.Description,
+		AvatarURL:   chatModel.AvatarURL,
+		CreatedBy:   chatModel.CreatedBy,
+		CreatedAt:   chatModel.CreatedAt,
+	}, nil
 }
