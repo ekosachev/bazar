@@ -16,6 +16,8 @@ export interface Chat {
   lastMessageAt?: string
   unreadCount?: number
   isOnline?: boolean
+  /** Group chat ("базар") member ids. */
+  participantIds?: string[]
 }
 
 export interface Message {

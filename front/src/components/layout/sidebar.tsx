@@ -3,12 +3,17 @@ import { IconButton, Input, PlusIcon } from '@/components/ui'
 import { Logo } from '@/components/layout/logo'
 import { LogoutButton } from '@/features/auth/components/logout-button'
 import { ChatListItem } from '@/features/chats/components/chat-list-item'
-import { mockChats } from '@/features/chats/data/mock-chats'
+import { CreateGroupModal } from '@/features/chats/components/create-group-modal'
 import { sortChatsByActivity } from '@/features/chats/lib/sort-chats'
+import { useChatsStore } from '@/features/chats/store/chats-store'
 
 export function Sidebar() {
-  const sortedChats = useMemo(() => sortChatsByActivity(mockChats), [])
-  const [activeChatId, setActiveChatId] = useState(sortedChats[0]?.id)
+  const chats = useChatsStore((state) => state.chats)
+  const activeChatId = useChatsStore((state) => state.activeChatId)
+  const setActiveChatId = useChatsStore((state) => state.setActiveChatId)
+  const sortedChats = useMemo(() => sortChatsByActivity(chats), [chats])
+
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
 
   return (
     <aside className="flex h-full w-full max-w-sm flex-col border-r border-border bg-bg-elevated">
@@ -16,7 +21,7 @@ export function Sidebar() {
         <Logo />
         {/* TODO: временно для проверки логаута, убрать перед коммитом */}
         <LogoutButton size="sm" />
-        <IconButton label="Новый чат">
+        <IconButton label="Новый базар" onClick={() => setIsCreateGroupOpen(true)}>
           <PlusIcon />
         </IconButton>
       </header>
@@ -35,6 +40,8 @@ export function Sidebar() {
           />
         ))}
       </nav>
+
+      <CreateGroupModal open={isCreateGroupOpen} onClose={() => setIsCreateGroupOpen(false)} />
     </aside>
   )
 }
