@@ -93,16 +93,26 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
   },
 
   removeParticipant: (chatId, userId) => {
-    set((state) => ({
-      chats: state.chats.map((chat) =>
-        chat.id === chatId
-          ? {
-              ...chat,
-              participantIds: (chat.participantIds ?? []).filter((id) => id !== userId),
-              adminIds: (chat.adminIds ?? []).filter((id) => id !== userId),
-            }
-          : chat,
-      ),
-    }))
+    const isSelfRemoval = useAuthStore.getState().user?.id === userId
+
+    set((state) => {
+      // Removing yourself means leaving the group — it should disappear from your chat list.
+      const chats = isSelfRemoval
+        ? state.chats.filter((chat) => chat.id !== chatId)
+        : state.chats.map((chat) =>
+            chat.id === chatId
+              ? {
+                  ...chat,
+                  participantIds: (chat.participantIds ?? []).filter((id) => id !== userId),
+                  adminIds: (chat.adminIds ?? []).filter((id) => id !== userId),
+                }
+              : chat,
+          )
+
+      const activeChatId =
+        isSelfRemoval && state.activeChatId === chatId ? chats[0]?.id : state.activeChatId
+
+      return { chats, activeChatId }
+    })
   },
 }))
