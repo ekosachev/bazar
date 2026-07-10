@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
-import { IconButton, Input, PlusIcon } from '@/components/ui'
+import { useMemo } from 'react'
+import { Input } from '@/components/ui'
 import { Logo } from '@/components/layout/logo'
 import { LogoutButton } from '@/features/auth/components/logout-button'
 import { ChatListItem } from '@/features/chats/components/chat-list-item'
-import { CreateGroupModal } from '@/features/chats/components/create-group-modal'
+import { CreateChatMenu } from '@/features/chats/components/create-chat-menu'
 import { sortChatsByActivity } from '@/features/chats/lib/sort-chats'
 import { useChatsStore } from '@/features/chats/store/chats-store'
 
@@ -13,17 +13,13 @@ export function Sidebar() {
   const setActiveChatId = useChatsStore((state) => state.setActiveChatId)
   const sortedChats = useMemo(() => sortChatsByActivity(chats), [chats])
 
-  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false)
-
   return (
     <aside className="flex h-full w-full max-w-sm flex-col border-r border-border bg-bg-elevated">
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-4">
         <Logo />
         {/* TODO: временно для проверки логаута, убрать перед коммитом */}
         <LogoutButton size="sm" />
-        <IconButton label="Новый базар" onClick={() => setIsCreateGroupOpen(true)}>
-          <PlusIcon />
-        </IconButton>
+        <CreateChatMenu />
       </header>
 
       <div className="px-4 py-3">
@@ -40,8 +36,6 @@ export function Sidebar() {
           />
         ))}
       </nav>
-
-      <CreateGroupModal open={isCreateGroupOpen} onClose={() => setIsCreateGroupOpen(false)} />
     </aside>
   )
 }

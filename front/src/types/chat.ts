@@ -18,6 +18,8 @@ export interface Chat {
   isOnline?: boolean
   /** Group chat ("базар") member ids. */
   participantIds?: string[]
+  /** Channel ("точка") description. */
+  description?: string
 }
 
 export interface Message {
