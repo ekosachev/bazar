@@ -32,6 +32,15 @@ func (s *ChatService) CreateDirectChat(
 		return nil, err
 	}
 
+	existingChat, err := s.FindDirectChat(ctx, creatorID, targetID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingChat != nil {
+		return existingChat, nil
+	}
+
 	chatDTO := ChatDTO{
 		Type:      ChatDirect,
 		CreatedBy: creatorID,
@@ -42,10 +51,10 @@ func (s *ChatService) CreateDirectChat(
 		return nil, err
 	}
 
-	if err = s.addUserToChat(ctx, chatDTO.ID, creatorID, creatorID, RoleMember); err != nil {
+	if err = s.AddUserToChat(ctx, chatDTO.ID, creatorID, creatorID, RoleMember); err != nil {
 		return nil, err
 	}
-	if err = s.addUserToChat(ctx, chatDTO.ID, targetID, creatorID, RoleMember); err != nil {
+	if err = s.AddUserToChat(ctx, chatDTO.ID, targetID, creatorID, RoleMember); err != nil {
 		return nil, err
 	}
 
@@ -78,12 +87,12 @@ func (s *ChatService) CreateGroupChat(
 		return nil, err
 	}
 
-	if err = s.addUserToChat(ctx, chatDTO.ID, creatorID, creatorID, RoleOwner); err != nil {
+	if err = s.AddUserToChat(ctx, chatDTO.ID, creatorID, creatorID, RoleOwner); err != nil {
 		return nil, err
 	}
 
 	for _, memberID := range request.Members {
-		if err = s.addUserToChat(ctx, chatDTO.ID, memberID, creatorID, RoleMember); err != nil {
+		if err = s.AddUserToChat(ctx, chatDTO.ID, memberID, creatorID, RoleMember); err != nil {
 			return nil, err
 		}
 	}
@@ -119,7 +128,7 @@ func (s *ChatService) CreateChannelChat(
 		return nil, err
 	}
 
-	if err = s.addUserToChat(ctx, chatDTO.ID, creatorID, creatorID, RoleOwner); err != nil {
+	if err = s.AddUserToChat(ctx, chatDTO.ID, creatorID, creatorID, RoleOwner); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +142,11 @@ func (s *ChatService) CreateChannelChat(
 	}, nil
 }
 
-func (s *ChatService) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatResponse, error) {
+func (s *ChatService) GetByID(ctx context.Context, userID uuid.UUID, chatID uuid.UUID) (*ChatResponse, error) {
+	if _, err := s.GetUserRoleForChat(ctx, userID, chatID); err != nil {
+		return nil, err
+	}
+
 	chatDTO, err := s.repo.GetByID(ctx, chatID)
 	if err != nil {
 		return nil, err
@@ -150,13 +163,26 @@ func (s *ChatService) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatRespo
 	}, nil
 }
 
-func (s *ChatService) addUserToChat(
+func (s *ChatService) AddUserToChat(
 	ctx context.Context,
 	chatID uuid.UUID,
 	userID uuid.UUID,
 	inviterID uuid.UUID,
 	role ChatMemberRole,
 ) error {
+	inviterRole, err := s.GetUserRoleForChat(ctx, inviterID, chatID)
+	if err != nil {
+		return err
+	}
+
+	if *inviterRole == RoleMember {
+		return &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "add a user",
+		}
+	}
+
 	chatMemberDTO := ChatMemberDTO{
 		ChatModelID: chatID,
 		UserModelID: userID,
@@ -164,13 +190,46 @@ func (s *ChatService) addUserToChat(
 		InvitedBy:   inviterID,
 	}
 
-	err := s.repo.AddUserToChat(ctx, &chatMemberDTO)
+	err = s.repo.AddUserToChat(ctx, &chatMemberDTO)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return &ErrAlreadyMember{ChatID: chatID, UserID: userID}
 		}
 	}
 	return nil
+}
+
+func (s *ChatService) RemoveUserFromChat(ctx context.Context, chatID uuid.UUID, userID uuid.UUID, removerID uuid.UUID) error {
+	removerRole, err := s.GetUserRoleForChat(ctx, removerID, chatID)
+	if err != nil {
+		return err
+	}
+
+	userRole, err := s.GetUserRoleForChat(ctx, removerID, chatID)
+	if err != nil {
+		return err
+	}
+
+	if removerID != userID {
+		switch *removerRole {
+		case RoleMember:
+			return &ErrInsufficientPermissions{
+				ChatID: chatID,
+				UserID: userID,
+				Action: "remove a user",
+			}
+		case RoleAdmin:
+			if *userRole != RoleMember {
+				return &ErrInsufficientPermissions{
+					ChatID: chatID,
+					UserID: userID,
+					Action: "remove an admin/owner",
+				}
+			}
+		}
+	}
+
+	return s.repo.RemoveUserFromChat(ctx, userID, chatID)
 }
 
 func (s *ChatService) GetUserRoleForChat(ctx context.Context, userID uuid.UUID, chatID uuid.UUID) (*ChatMemberRole, error) {
@@ -215,4 +274,28 @@ func (s *ChatService) GetChatMembers(ctx context.Context, userID uuid.UUID, chat
 	}
 
 	return result, nil
+}
+
+func (cdto *ChatDTO) IntoResponse() *ChatResponse {
+	return &ChatResponse{
+		ID:          cdto.ID.String(),
+		Type:        string(cdto.Type),
+		Title:       cdto.Title,
+		Description: cdto.Description,
+		AvatarURL:   cdto.AvatarURL,
+		CreatedBy:   cdto.CreatedBy.String(),
+		CreatedAt:   cdto.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+func (s *ChatService) FindDirectChat(ctx context.Context, userID uuid.UUID, otherUserID uuid.UUID) (*ChatResponse, error) {
+	chat, err := s.repo.FindDirectChat(ctx, userID, otherUserID)
+	if err != nil {
+		return nil, err
+	}
+	if chat == nil {
+		return nil, nil
+	}
+
+	return chat.IntoResponse(), nil
 }
