@@ -52,6 +52,13 @@ func (r *ChatRepository) AddUserToChat(ctx context.Context, chatMember *ChatMemb
 	return nil
 }
 
+func (r *ChatRepository) RemoveUserFromChat(ctx context.Context, userID uuid.UUID, chatID uuid.UUID) error {
+	_, err := gorm.G[ChatMemberModel](r.db).
+		Where("user_model_id = ? AND chat_model_id = ?", userID, chatID).
+		Delete(ctx)
+	return err
+}
+
 func (r *ChatRepository) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatDTO, error) {
 	chatModel, err := gorm.G[ChatModel](r.db).Where("id = ?", chatID).First(ctx)
 	if err != nil {
@@ -98,6 +105,18 @@ func (cmm *ChatMemberModel) IntoDTO() *ChatMemberDTO {
 	}
 }
 
+func (cm *ChatModel) IntoDTO() *ChatDTO {
+	return &ChatDTO{
+		ID:          cm.ID,
+		Type:        cm.Type,
+		Title:       cm.Title,
+		Description: cm.Description,
+		AvatarURL:   cm.AvatarURL,
+		CreatedBy:   cm.CreatedBy,
+		CreatedAt:   cm.CreatedAt,
+	}
+}
+
 func (r *ChatRepository) GetChatMembers(ctx context.Context, chatID uuid.UUID) ([]ChatMemberDTO, error) {
 	var result []ChatMemberDTO
 	var memberModels []ChatMemberModel
@@ -113,4 +132,34 @@ func (r *ChatRepository) GetChatMembers(ctx context.Context, chatID uuid.UUID) (
 	}
 
 	return result, err
+}
+
+func (r *ChatRepository) FindDirectChat(ctx context.Context, userID uuid.UUID, otherUserID uuid.UUID) (*ChatDTO, error) {
+	directChats, err := gorm.G[ChatModel](r.db).
+		Where("created_by = ? OR created_by = ?", userID, otherUserID).
+		Where("type = ?", ChatDirect).
+		Find(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, chat := range directChats {
+		var otherMember uuid.UUID
+		if chat.CreatedBy == userID {
+			otherMember = otherUserID
+		} else {
+			otherMember = userID
+		}
+
+		membership, err := r.GetUserMembershipForChat(ctx, otherMember, chat.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		if membership != nil {
+			return chat.IntoDTO(), nil
+		}
+	}
+
+	return nil, nil
 }
