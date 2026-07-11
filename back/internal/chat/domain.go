@@ -116,3 +116,23 @@ type ErrAlreadyMember struct {
 func (e *ErrAlreadyMember) Error() string {
 	return fmt.Sprintf("User %s is already a member of chat %s", e.UserID, e.ChatID)
 }
+
+type ErrNotMember struct {
+	ChatID uuid.UUID
+	UserID uuid.UUID
+}
+
+func (e *ErrNotMember) Error() string {
+	return fmt.Sprintf("User %s is not a member of chat %s", e.UserID, e.ChatID)
+}
+
+type ErrInsufficientPermissions struct {
+	ChatID uuid.UUID
+	UserID uuid.UUID
+
+	Action string
+}
+
+func (e *ErrInsufficientPermissions) Error() string {
+	return fmt.Sprintf("User %s does not have enough permissions in chat %s to %s", e.UserID, e.ChatID, e.Action)
+}

@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -66,4 +67,50 @@ func (r *ChatRepository) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatDT
 		CreatedBy:   chatModel.CreatedBy,
 		CreatedAt:   chatModel.CreatedAt,
 	}, nil
+}
+
+func (r *ChatRepository) GetUserMembershipForChat(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+) (*ChatMemberDTO, error) {
+	chatMembership, err := gorm.G[ChatMemberModel](r.db).
+		Where("chat_model_id = ? AND user_model_id = ?", chatID, userID).
+		First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return chatMembership.IntoDTO(), nil
+}
+
+func (cmm *ChatMemberModel) IntoDTO() *ChatMemberDTO {
+	return &ChatMemberDTO{
+		ChatModelID:       cmm.ChatModelID,
+		UserModelID:       cmm.UserModelID,
+		Role:              cmm.Role,
+		LastReadMessageID: cmm.LastReadMessageID,
+		InvitedBy:         cmm.InvitedBy,
+		CreatedAt:         cmm.CreatedAt,
+	}
+}
+
+func (r *ChatRepository) GetChatMembers(ctx context.Context, chatID uuid.UUID) ([]ChatMemberDTO, error) {
+	var result []ChatMemberDTO
+	var memberModels []ChatMemberModel
+
+	err := r.db.Model(&ChatMemberModel{}).Where("chat_model_id = ?", chatID).Find(&memberModels).Error
+	if err != nil {
+		return result, err
+	}
+
+	result = make([]ChatMemberDTO, len(memberModels))
+	for i, cm := range memberModels {
+		result[i] = *cm.IntoDTO()
+	}
+
+	return result, err
 }

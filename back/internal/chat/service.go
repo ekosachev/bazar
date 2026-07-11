@@ -172,3 +172,47 @@ func (s *ChatService) addUserToChat(
 	}
 	return nil
 }
+
+func (s *ChatService) GetUserRoleForChat(ctx context.Context, userID uuid.UUID, chatID uuid.UUID) (*ChatMemberRole, error) {
+	chatMembership, err := s.repo.GetUserMembershipForChat(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	if chatMembership == nil {
+		return nil, &ErrNotMember{UserID: userID, ChatID: chatID}
+	}
+
+	return &chatMembership.Role, nil
+}
+
+func (cm *ChatMemberDTO) IntoResponse() *ChatMemberResponse {
+	return &ChatMemberResponse{
+		ChatModelID:       cm.ChatModelID,
+		UserModelID:       cm.UserModelID,
+		Role:              cm.Role,
+		LastReadMessageID: cm.LastReadMessageID,
+		InvitedBy:         cm.InvitedBy,
+		CreatedAt:         cm.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+func (s *ChatService) GetChatMembers(ctx context.Context, userID uuid.UUID, chatID uuid.UUID) ([]ChatMemberResponse, error) {
+	var result []ChatMemberResponse
+
+	if _, err := s.GetUserRoleForChat(ctx, userID, chatID); err != nil {
+		return result, err
+	}
+
+	memberships, err := s.repo.GetChatMembers(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	result = make([]ChatMemberResponse, len(memberships))
+	for i, m := range memberships {
+		result[i] = *m.IntoResponse()
+	}
+
+	return result, nil
+}

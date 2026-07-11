@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ekosachev/bazar/internal/middleware"
@@ -23,6 +24,7 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 		accessTokenGroup := chatGroup.Group("/").Use(middleware.RequiresAccessToken())
 		{
 			accessTokenGroup.GET("/:id", h.getByID)
+			accessTokenGroup.GET("/:id/members", h.getChatMembers)
 			accessTokenGroup.POST("/direct", h.createDirectChat)
 			accessTokenGroup.POST("/group", h.createGroupChat)
 			accessTokenGroup.POST("/channel", h.createChannelChat)
@@ -108,5 +110,36 @@ func (h *ChatHandler) getByID(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.APIResponse{
 		Success: true,
 		Data:    chat,
+	})
+}
+
+func (h *ChatHandler) getChatMembers(c *gin.Context) {
+	idString := c.Param("id")
+
+	id, err := uuid.Parse(idString)
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Chat ID must be a valid UUID string")
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	result, err := h.service.GetChatMembers(c, userID, id)
+	if err != nil {
+		var notMember *ErrNotMember
+		if errors.As(err, &notMember) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    result,
 	})
 }
