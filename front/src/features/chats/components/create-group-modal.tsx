@@ -18,12 +18,15 @@ export function CreateGroupModal({ open, onClose }: CreateGroupModalProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [titleError, setTitleError] = useState<string | null>(null)
   const [participantsError, setParticipantsError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   function handleClose() {
     setTitle('')
     setSelectedIds([])
     setTitleError(null)
     setParticipantsError(null)
+    setFormError(null)
     onClose()
   }
 
@@ -33,7 +36,7 @@ export function CreateGroupModal({ open, onClose }: CreateGroupModalProps) {
     )
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const nextTitleError = validateChatTitle(title) ?? null
@@ -42,8 +45,16 @@ export function CreateGroupModal({ open, onClose }: CreateGroupModalProps) {
     setParticipantsError(nextParticipantsError)
     if (nextTitleError || nextParticipantsError) return
 
-    createGroupChat(title.trim(), selectedIds)
-    handleClose()
+    setFormError(null)
+    setIsSubmitting(true)
+    try {
+      await createGroupChat(title.trim(), selectedIds)
+      handleClose()
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Не удалось создать базар')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -71,8 +82,10 @@ export function CreateGroupModal({ open, onClose }: CreateGroupModalProps) {
           ) : null}
         </div>
 
-        <Button type="submit" variant="primary" className="w-full">
-          Создать базар
+        {formError ? <p className="text-caption text-danger">{formError}</p> : null}
+
+        <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Создаём…' : 'Создать базар'}
         </Button>
       </form>
     </Modal>
