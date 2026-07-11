@@ -117,6 +117,11 @@ type UpdateChatRequest struct {
 	Description *string `json:"description"`
 }
 
+type SetRoleRequest struct {
+	MemberID uuid.UUID `json:"user_id" binding:"required"`
+	NewRole  string    `json:"new_role" binding:"required"`
+}
+
 type ErrAlreadyMember struct {
 	ChatID uuid.UUID
 	UserID uuid.UUID

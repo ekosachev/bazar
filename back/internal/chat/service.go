@@ -337,3 +337,45 @@ func (s *ChatService) UpdateChat(
 
 	return chat.IntoResponse(), nil
 }
+
+func (s *ChatService) SetRole(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	updaterID uuid.UUID,
+	newRole ChatMemberRole,
+) error {
+	updaterRole, err := s.GetUserRoleForChat(ctx, updaterID, chatID)
+	if err != nil {
+		return err
+	}
+
+	if *updaterRole != RoleOwner {
+		return &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "update user roles",
+		}
+	}
+
+	userRole, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return err
+	}
+	if *userRole == RoleOwner {
+		return &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "change role of the owner",
+		}
+	}
+	if newRole == RoleOwner {
+		return &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "make user an owner",
+		}
+	}
+
+	return s.repo.SetRole(ctx, userID, chatID, newRole)
+}

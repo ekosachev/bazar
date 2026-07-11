@@ -181,3 +181,15 @@ func (r *ChatRepository) UpdateChat(ctx context.Context, chat *ChatDTO) error {
 	_, err := gorm.G[ChatModel](r.db).Where("id = ?", chat.ID).Updates(ctx, *chatModel)
 	return err
 }
+
+func (r *ChatRepository) SetRole(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	newRole ChatMemberRole,
+) error {
+	_, err := gorm.G[ChatMemberModel](r.db).
+		Where("user_model_id = ? AND chat_model_id = ?", userID, chatID).
+		Update(ctx, "role", newRole)
+	return err
+}
