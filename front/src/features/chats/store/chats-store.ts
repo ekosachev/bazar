@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import * as chatsApi from '@/features/chats/api/chats-api'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { mockChats } from '@/features/chats/data/mock-chats'
 import type { Chat } from '@/types/chat'
@@ -7,7 +8,7 @@ interface ChatsState {
   chats: Chat[]
   activeChatId: string | undefined
   setActiveChatId: (chatId: string) => void
-  createGroupChat: (title: string, participantIds: string[]) => string
+  createGroupChat: (title: string, participantIds: string[]) => Promise<string>
   createChannelChat: (title: string, description: string) => string
   openDirectChat: (userId: string, displayName: string) => string
   isChatAdmin: (chatId: string, userId: string | undefined) => boolean
@@ -25,23 +26,24 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
 
   setActiveChatId: (chatId) => set({ activeChatId: chatId }),
 
-  createGroupChat: (title, participantIds) => {
+  createGroupChat: async (title, participantIds) => {
     const currentUserId = useAuthStore.getState().user?.id
+    const response = await chatsApi.createGroupChat(title, '', participantIds)
+
     const allParticipantIds = currentUserId
       ? Array.from(new Set([currentUserId, ...participantIds]))
       : participantIds
 
-    const id = generateChatId()
     const chat: Chat = {
-      id,
+      id: response.id,
       type: 'group',
-      title,
-      lastMessageAt: new Date().toISOString(),
+      title: response.title,
+      lastMessageAt: response.created_at,
       participantIds: allParticipantIds,
       adminIds: currentUserId ? [currentUserId] : [],
     }
-    set((state) => ({ chats: [chat, ...state.chats], activeChatId: id }))
-    return id
+    set((state) => ({ chats: [chat, ...state.chats], activeChatId: chat.id }))
+    return chat.id
   },
 
   createChannelChat: (title, description) => {
