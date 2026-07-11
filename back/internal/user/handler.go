@@ -23,6 +23,10 @@ type UserResponse struct {
 	CreatedAt   string  `json:"created_at"`
 }
 
+type UsernameSearchRequest struct {
+	Username string `form:"username"`
+}
+
 func NewUserHandler(service *UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
@@ -34,6 +38,7 @@ func (r *UserHandler) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		accessTokenGroup.GET("/:id", r.getByID)
 		accessTokenGroup.GET("/my_chats", r.getUserChats)
+		accessTokenGroup.GET("/search", r.searchByUsername)
 	}
 }
 
@@ -86,5 +91,24 @@ func (h *UserHandler) getUserChats(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.APIResponse{
 		Success: true,
 		Data:    result,
+	})
+}
+
+func (h *UserHandler) searchByUsername(c *gin.Context) {
+	var req UsernameSearchRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	users, err := h.service.SearchByUsername(c, req.Username)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    users,
 	})
 }
