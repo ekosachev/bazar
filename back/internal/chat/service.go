@@ -142,7 +142,11 @@ func (s *ChatService) CreateChannelChat(
 	}, nil
 }
 
-func (s *ChatService) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatResponse, error) {
+func (s *ChatService) GetByID(ctx context.Context, userID uuid.UUID, chatID uuid.UUID) (*ChatResponse, error) {
+	if _, err := s.GetUserRoleForChat(ctx, userID, chatID); err != nil {
+		return nil, err
+	}
+
 	chatDTO, err := s.repo.GetByID(ctx, chatID)
 	if err != nil {
 		return nil, err
