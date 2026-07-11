@@ -23,3 +23,10 @@ export function createChannelChat(title: string, description: string) {
     body: JSON.stringify({ title, description }),
   })
 }
+
+export function createDirectChat(targetUserId: string) {
+  return apiFetch<ChatApiResponse>('/chat/direct', {
+    method: 'POST',
+    body: JSON.stringify({ target_user_id: targetUserId }),
+  })
+}

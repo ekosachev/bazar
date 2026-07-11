@@ -10,14 +10,10 @@ interface ChatsState {
   setActiveChatId: (chatId: string) => void
   createGroupChat: (title: string, participantIds: string[]) => Promise<string>
   createChannelChat: (title: string, description: string) => Promise<string>
-  openDirectChat: (userId: string, displayName: string) => string
+  openDirectChat: (userId: string, displayName: string) => Promise<string>
   isChatAdmin: (chatId: string, userId: string | undefined) => boolean
   addParticipant: (chatId: string, userId: string) => void
   removeParticipant: (chatId: string, userId: string) => void
-}
-
-function generateChatId() {
-  return crypto.randomUUID()
 }
 
 export const useChatsStore = create<ChatsState>((set, get) => ({
@@ -60,23 +56,24 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
     return chat.id
   },
 
-  openDirectChat: (userId, displayName) => {
+  openDirectChat: async (userId, displayName) => {
     const existing = get().chats.find((chat) => chat.type === 'direct' && chat.peerUserId === userId)
     if (existing) {
       set({ activeChatId: existing.id })
       return existing.id
     }
 
-    const id = generateChatId()
+    const response = await chatsApi.createDirectChat(userId)
+
     const chat: Chat = {
-      id,
+      id: response.id,
       type: 'direct',
       title: displayName,
       peerUserId: userId,
-      lastMessageAt: new Date().toISOString(),
+      lastMessageAt: response.created_at,
     }
-    set((state) => ({ chats: [chat, ...state.chats], activeChatId: id }))
-    return id
+    set((state) => ({ chats: [chat, ...state.chats], activeChatId: chat.id }))
+    return chat.id
   },
 
   isChatAdmin: (chatId, userId) => {
