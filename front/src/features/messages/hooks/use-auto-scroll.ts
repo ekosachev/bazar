@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import type { Message } from '@/types/chat'
 
-export function useAutoScroll(messages: Message[]) {
-  const containerRef = useRef<HTMLDivElement>(null)
+export function useAutoScroll(
+  messages: Message[],
+  containerRef: RefObject<HTMLDivElement | null>,
+) {
   const lastMessageIdRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -19,7 +21,5 @@ export function useAutoScroll(messages: Message[]) {
     if (isNewAtEnd) {
       container.scrollTop = container.scrollHeight
     }
-  }, [messages])
-
-  return containerRef
+  }, [containerRef, messages])
 }

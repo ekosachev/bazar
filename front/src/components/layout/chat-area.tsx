@@ -7,6 +7,7 @@ import { ConnectionStatus } from '@/features/messages/components/connection-stat
 import { MessageComposer } from '@/features/messages/components/message-composer'
 import { MessageList } from '@/features/messages/components/message-list'
 import { useMessageEvents } from '@/features/messages/hooks/use-message-events'
+import { useMessagePagination } from '@/features/messages/hooks/use-message-pagination'
 import { useSendMessage } from '@/features/messages/hooks/use-send-message'
 import {
   useActiveChatMessages,
@@ -24,6 +25,7 @@ export function ChatArea() {
   const messages = useActiveChatMessages()
   const { sendMessage } = useSendMessage(activeChatId ?? '')
   useMessageEvents(activeChatId ?? '')
+  const { containerRef, handleScroll, isLoadingMore } = useMessagePagination(activeChatId)
 
   useEffect(() => {
     setMessagesActiveChatId(activeChatId ?? null)
@@ -68,7 +70,13 @@ export function ChatArea() {
         </IconButton>
       </header>
 
-      <MessageList messages={messages} showSender={showSender} />
+      <MessageList
+        messages={messages}
+        showSender={showSender}
+        containerRef={containerRef}
+        onScroll={handleScroll}
+        isLoadingMore={isLoadingMore}
+      />
 
       <footer className="border-t border-border px-5 py-4">
         <MessageComposer onSubmit={sendMessage} disabled={!activeChatId} />
