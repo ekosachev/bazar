@@ -9,6 +9,7 @@ import { MessageList } from '@/features/messages/components/message-list'
 import { MessageSearch } from '@/features/messages/components/message-search'
 import { useMessageEvents } from '@/features/messages/hooks/use-message-events'
 import { useMessagePagination } from '@/features/messages/hooks/use-message-pagination'
+import { useMessageSearch } from '@/features/messages/hooks/use-message-search'
 import { useSendMessage } from '@/features/messages/hooks/use-send-message'
 import { filterMessagesByQuery } from '@/features/messages/lib/search-query'
 import {
@@ -30,6 +31,9 @@ export function ChatArea() {
   const { containerRef, handleScroll, isLoadingMore } = useMessagePagination(activeChatId)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  const trimmedSearchQuery = searchQuery.trim()
+  const { matches, activeMatchId, scrollToMessage } = useMessageSearch(messages, searchQuery)
 
   useEffect(() => {
     setIsSearchOpen(false)
@@ -62,7 +66,6 @@ export function ChatArea() {
   }
 
   const showSender = activeChat.type === 'group'
-  const trimmedSearchQuery = searchQuery.trim()
   const visibleMessages = useMemo(
     () => filterMessagesByQuery(messages, trimmedSearchQuery),
     [messages, trimmedSearchQuery],
@@ -91,7 +94,9 @@ export function ChatArea() {
         open={isSearchOpen}
         query={searchQuery}
         onQueryChange={setSearchQuery}
-        matchCount={trimmedSearchQuery ? visibleMessages.length : undefined}
+        matches={matches}
+        activeMatchId={activeMatchId}
+        onSelectMatch={scrollToMessage}
         onClose={() => {
           setIsSearchOpen(false)
           setSearchQuery('')
@@ -105,6 +110,7 @@ export function ChatArea() {
         onScroll={handleScroll}
         isLoadingMore={isLoadingMore}
         highlightQuery={trimmedSearchQuery || undefined}
+        activeMatchId={activeMatchId}
         emptyText={trimmedSearchQuery ? 'Ничего не найдено' : 'Сообщений пока нет'}
       />
 

@@ -6,18 +6,27 @@ export interface MessageBubbleProps {
   message: Message
   showSender?: boolean
   highlightQueryText?: string
+  isActiveMatch?: boolean
 }
 
 export function MessageBubble({
   message,
   showSender = false,
   highlightQueryText,
+  isActiveMatch = false,
 }: MessageBubbleProps) {
   const isOwn = message.isOwn
   const contentParts = highlightQuery(message.content, highlightQueryText ?? '')
 
   return (
-    <div className={cn('flex w-full', isOwn ? 'justify-end' : 'justify-start')}>
+    <div
+      id={`message-${message.id}`}
+      className={cn(
+        'flex w-full scroll-mt-4',
+        isOwn ? 'justify-end' : 'justify-start',
+        isActiveMatch && 'rounded-lg ring-2 ring-accent/70',
+      )}
+    >
       <div
         className={cn(
           'max-w-[min(72%,28rem)] rounded-lg px-3.5 py-2 shadow-sm',

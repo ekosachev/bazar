@@ -11,6 +11,7 @@ export interface MessageListProps {
   isLoadingMore?: boolean
   highlightQuery?: string
   emptyText?: string
+  activeMatchId?: string | null
 }
 
 export function MessageList({
@@ -21,6 +22,7 @@ export function MessageList({
   isLoadingMore = false,
   highlightQuery,
   emptyText = 'Сообщений пока нет',
+  activeMatchId,
 }: MessageListProps) {
   useAutoScroll(messages, containerRef)
 
@@ -47,6 +49,7 @@ export function MessageList({
           message={message}
           showSender={showSender}
           highlightQueryText={highlightQuery}
+          isActiveMatch={activeMatchId === message.id}
         />
       ))}
     </div>
