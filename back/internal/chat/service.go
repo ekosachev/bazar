@@ -32,6 +32,15 @@ func (s *ChatService) CreateDirectChat(
 		return nil, err
 	}
 
+	existingChat, err := s.FindDirectChat(ctx, creatorID, targetID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existingChat != nil {
+		return existingChat, nil
+	}
+
 	chatDTO := ChatDTO{
 		Type:      ChatDirect,
 		CreatedBy: creatorID,
@@ -215,4 +224,28 @@ func (s *ChatService) GetChatMembers(ctx context.Context, userID uuid.UUID, chat
 	}
 
 	return result, nil
+}
+
+func (cdto *ChatDTO) IntoResponse() *ChatResponse {
+	return &ChatResponse{
+		ID:          cdto.ID.String(),
+		Type:        string(cdto.Type),
+		Title:       cdto.Title,
+		Description: cdto.Description,
+		AvatarURL:   cdto.AvatarURL,
+		CreatedBy:   cdto.CreatedBy.String(),
+		CreatedAt:   cdto.CreatedAt.Format(time.RFC3339),
+	}
+}
+
+func (s *ChatService) FindDirectChat(ctx context.Context, userID uuid.UUID, otherUserID uuid.UUID) (*ChatResponse, error) {
+	chat, err := s.repo.FindDirectChat(ctx, userID, otherUserID)
+	if err != nil {
+		return nil, err
+	}
+	if chat == nil {
+		return nil, nil
+	}
+
+	return chat.IntoResponse(), nil
 }
