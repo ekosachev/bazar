@@ -24,9 +24,11 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 		accessTokenGroup := chatGroup.Group("/").Use(middleware.RequiresAccessToken())
 		{
 			accessTokenGroup.GET("/:id", h.getByID)
+			accessTokenGroup.PUT("/:id", h.updateChat)
 			accessTokenGroup.GET("/:id/members", h.getChatMembers)
 			accessTokenGroup.PUT("/:id/members", h.addUserToChat)
 			accessTokenGroup.PUT("/:id/members", h.removeUserFromChat)
+			accessTokenGroup.PUT("/:id/members/set_role", h.setRole)
 			accessTokenGroup.DELETE("/:id/leave", h.leaveChat)
 			accessTokenGroup.POST("/direct", h.createDirectChat)
 			accessTokenGroup.POST("/group", h.createGroupChat)
@@ -259,4 +261,86 @@ func (h *ChatHandler) leaveChat(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, utils.APIResponse{Success: true})
+}
+
+func (h *ChatHandler) updateChat(c *gin.Context) {
+	chatID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var req UpdateChatRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	chat, err := h.service.UpdateChat(c, userID, chatID, req)
+	if err != nil {
+		var notMember *ErrNotMember
+		if errors.As(err, &notMember) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		var insufficientPermissions *ErrInsufficientPermissions
+		if errors.As(err, &insufficientPermissions) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    chat,
+	})
+}
+
+func (h *ChatHandler) setRole(c *gin.Context) {
+	chatID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	updaterID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var req SetRoleRequest
+
+	if err = c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = h.service.SetRole(c, req.MemberID, chatID, updaterID, ChatMemberRole(req.NewRole))
+	if err != nil {
+		var notMember *ErrNotMember
+		if errors.As(err, &notMember) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		var insufficientPermissions *ErrInsufficientPermissions
+		if errors.As(err, &insufficientPermissions) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+	})
 }
