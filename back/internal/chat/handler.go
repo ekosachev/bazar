@@ -101,7 +101,13 @@ func (h *ChatHandler) getByID(c *gin.Context) {
 		return
 	}
 
-	chat, err := h.service.GetByID(c, id)
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	chat, err := h.service.GetByID(c, userID, id)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
