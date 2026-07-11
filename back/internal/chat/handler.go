@@ -26,7 +26,8 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 			accessTokenGroup.GET("/:id", h.getByID)
 			accessTokenGroup.GET("/:id/members", h.getChatMembers)
 			accessTokenGroup.PUT("/:id/members", h.addUserToChat)
-			accessTokenGroup.DELETE("/:id/members", h.removeUserFromChat)
+			accessTokenGroup.PUT("/:id/members", h.removeUserFromChat)
+			accessTokenGroup.DELETE("/:id/leave", h.leaveChat)
 			accessTokenGroup.POST("/direct", h.createDirectChat)
 			accessTokenGroup.POST("/group", h.createGroupChat)
 			accessTokenGroup.POST("/channel", h.createChannelChat)
@@ -216,11 +217,6 @@ func (h *ChatHandler) removeUserFromChat(c *gin.Context) {
 
 	err = h.service.RemoveUserFromChat(c, chatID, req.UserID, userID)
 	if err != nil {
-		var alreadyMember *ErrAlreadyMember
-		if errors.As(err, &alreadyMember) {
-			utils.SendError(c, http.StatusConflict, err.Error())
-			return
-		}
 		var notMember *ErrNotMember
 		if errors.As(err, &notMember) {
 			utils.SendError(c, http.StatusForbidden, err.Error())
@@ -229,6 +225,33 @@ func (h *ChatHandler) removeUserFromChat(c *gin.Context) {
 		var insufficientPermissions *ErrInsufficientPermissions
 		if errors.As(err, &insufficientPermissions) {
 			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{Success: true})
+}
+
+func (h *ChatHandler) leaveChat(c *gin.Context) {
+	chatID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	err = h.service.RemoveUserFromChat(c, chatID, userID, userID)
+	if err != nil {
+		var notMember *ErrNotMember
+		if errors.As(err, &notMember) {
+			utils.SendError(c, http.StatusConflict, err.Error())
 			return
 		}
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
