@@ -7,12 +7,30 @@ import { useMessagesStore } from '@/features/messages/store/messages-store'
 const PAGE_SIZE = 20
 const SCROLL_THRESHOLD = 64
 
+function prependWithScrollPreserved(
+  container: HTMLDivElement,
+  prepend: () => void,
+  onRestored?: () => void,
+) {
+  const previousScrollHeight = container.scrollHeight
+  const previousScrollTop = container.scrollTop
+
+  prepend()
+
+  requestAnimationFrame(() => {
+    const nextScrollHeight = container.scrollHeight
+    container.scrollTop = nextScrollHeight - previousScrollHeight + previousScrollTop
+    onRestored?.()
+  })
+}
+
 export function useMessagePagination(chatId: string | undefined) {
   const prependMessages = useMessagesStore((state) => state.prependMessages)
   const currentUserId = useAuthStore((state) => state.user?.id)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
+  const isRestoringScrollRef = useRef(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
 
@@ -22,6 +40,11 @@ export function useMessagePagination(chatId: string | undefined) {
 
   const loadOlder = useCallback(async () => {
     if (!chatId || isLoadingRef.current || !hasMore) {
+      return
+    }
+
+    const container = containerRef.current
+    if (!container) {
       return
     }
 
@@ -44,13 +67,19 @@ export function useMessagePagination(chatId: string | undefined) {
       )
 
       if (messages.length > 0) {
-        prependMessages(chatId, messages)
+        isRestoringScrollRef.current = true
+        prependWithScrollPreserved(container, () => prependMessages(chatId, messages), () => {
+          isRestoringScrollRef.current = false
+        })
       }
 
       setHasMore(more)
     } catch {
       if (chatId === '1' && oldestMessage.id === 'm1') {
-        prependMessages(chatId, mockOlderMessages)
+        isRestoringScrollRef.current = true
+        prependWithScrollPreserved(container, () => prependMessages(chatId, mockOlderMessages), () => {
+          isRestoringScrollRef.current = false
+        })
       }
 
       setHasMore(false)
@@ -61,6 +90,10 @@ export function useMessagePagination(chatId: string | undefined) {
   }, [chatId, currentUserId, hasMore, prependMessages])
 
   const handleScroll = useCallback(() => {
+    if (isRestoringScrollRef.current) {
+      return
+    }
+
     const container = containerRef.current
 
     if (!container || container.scrollTop > SCROLL_THRESHOLD) {
