@@ -69,3 +69,24 @@ func (s *UserService) GetUserChats(ctx context.Context, userIDString string) ([]
 
 	return s.repo.GetUserChats(ctx, userID)
 }
+
+func (s *UserService) UpdateUser(ctx context.Context, userIDString string, request UpdateUserRequest) (*UserResponse, error) {
+	user, err := s.GetByID(ctx, userIDString)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.Username != nil {
+		user.Username = *request.Username
+	}
+
+	if request.DisplayName != nil {
+		user.DisplayName = *request.DisplayName
+	}
+
+	if err = s.repo.UpdateUser(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return user.IntoResponse(), nil
+}

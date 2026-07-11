@@ -40,6 +40,17 @@ func (u *UserModel) IntoDTO() *UserDTO {
 	}
 }
 
+func (u *UserDTO) IntoModel() *UserModel {
+	return &UserModel{
+		ID:           u.ID,
+		Username:     u.Username,
+		DisplayName:  u.DisplayName,
+		Email:        u.Email,
+		AvatarUrl:    u.AvatarUrl,
+		PasswordHash: u.PasswordHash,
+	}
+}
+
 type UserRepository struct {
 	db *gorm.DB
 }
@@ -146,4 +157,9 @@ func (r *UserRepository) GetUserChats(ctx context.Context, userID uuid.UUID) ([]
 	}
 
 	return result, nil
+}
+
+func (r *UserRepository) UpdateUser(ctx context.Context, user *UserDTO) error {
+	_, err := gorm.G[UserModel](r.db).Where("id = ?", user.ID).Updates(ctx, *user.IntoModel())
+	return err
 }

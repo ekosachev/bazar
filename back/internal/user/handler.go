@@ -27,6 +27,11 @@ type UsernameSearchRequest struct {
 	Username string `form:"username"`
 }
 
+type UpdateUserRequest struct {
+	Username    *string `json:"username"`
+	DisplayName *string `json:"display_name"`
+}
+
 func NewUserHandler(service *UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
@@ -36,6 +41,7 @@ func (r *UserHandler) RegisterRoutes(router *gin.RouterGroup) {
 
 	accessTokenGroup := group.Group("/").Use(middleware.RequiresAccessToken())
 	{
+		accessTokenGroup.PATCH("/update", r.update)
 		accessTokenGroup.GET("/:id", r.getByID)
 		accessTokenGroup.GET("/my_chats", r.getUserChats)
 		accessTokenGroup.GET("/search", r.searchByUsername)
@@ -48,10 +54,12 @@ func (r *UserHandler) getByID(c *gin.Context) {
 	userDTO, err := r.service.GetByID(c, id)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	if userDTO == nil {
 		utils.SendError(c, http.StatusNotFound, "User not found")
+		return
 	}
 
 	c.JSON(http.StatusOK, utils.APIResponse{
@@ -110,5 +118,26 @@ func (h *UserHandler) searchByUsername(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.APIResponse{
 		Success: true,
 		Data:    users,
+	})
+}
+
+func (h *UserHandler) update(c *gin.Context) {
+	var req UpdateUserRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID := c.GetString("userID")
+	user, err := h.service.UpdateUser(c, userID, req)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    user,
 	})
 }
