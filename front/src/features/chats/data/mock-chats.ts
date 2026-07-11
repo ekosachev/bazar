@@ -74,3 +74,22 @@ export const mockMessages = [
     createdAt: '12:52',
   },
 ]
+
+export const mockOlderMessages = [
+  {
+    id: 'm0-2',
+    chatId: '1',
+    senderId: 'u4',
+    senderName: 'Алексей',
+    content: 'Кто-нибудь уже на месте?',
+    createdAt: '12:35',
+  },
+  {
+    id: 'm0-1',
+    chatId: '1',
+    senderId: 'u2',
+    senderName: 'Марина',
+    content: 'Сегодня на базаре много народу.',
+    createdAt: '12:30',
+  },
+]
