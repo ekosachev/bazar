@@ -34,6 +34,10 @@ export function useSendMessage(chatId: string) {
 
   const sendMessage = useCallback(
     (content: string) => {
+      if (!chatId) {
+        return
+      }
+
       const clientMessageId = crypto.randomUUID()
       const optimisticMessage = createOptimisticMessage(
         chatId,

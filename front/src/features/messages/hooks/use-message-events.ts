@@ -10,7 +10,7 @@ export function useMessageEvents(chatId: string) {
   const userId = useAuthStore((state) => state.user?.id)
 
   useEffect(() => {
-    if (status !== 'connected') {
+    if (!chatId || status !== 'connected') {
       return
     }
 
@@ -18,7 +18,7 @@ export function useMessageEvents(chatId: string) {
   }, [chatId, send, status])
 
   useEffect(() => {
-    if (status !== 'connected') {
+    if (!chatId || status !== 'connected') {
       return
     }
 
