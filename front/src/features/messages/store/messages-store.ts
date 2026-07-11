@@ -89,10 +89,12 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
     }),
 }))
 
+const EMPTY_MESSAGES: Message[] = []
+
 export function useActiveChatMessages() {
   const activeChatId = useMessagesStore((state) => state.activeChatId)
   const messages = useMessagesStore((state) =>
-    activeChatId ? (state.messagesByChatId[activeChatId] ?? []) : [],
+    activeChatId ? (state.messagesByChatId[activeChatId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
   )
 
   return messages
