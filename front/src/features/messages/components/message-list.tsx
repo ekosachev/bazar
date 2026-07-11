@@ -9,6 +9,8 @@ export interface MessageListProps {
   containerRef: RefObject<HTMLDivElement | null>
   onScroll?: () => void
   isLoadingMore?: boolean
+  highlightQuery?: string
+  emptyText?: string
 }
 
 export function MessageList({
@@ -17,13 +19,15 @@ export function MessageList({
   containerRef,
   onScroll,
   isLoadingMore = false,
+  highlightQuery,
+  emptyText = 'Сообщений пока нет',
 }: MessageListProps) {
   useAutoScroll(messages, containerRef)
 
   if (messages.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center px-5 py-4">
-        <p className="text-body text-content-faint">Сообщений пока нет</p>
+        <p className="text-body text-content-faint">{emptyText}</p>
       </div>
     )
   }
@@ -38,7 +42,12 @@ export function MessageList({
         <p className="text-center text-caption text-content-faint">Загрузка…</p>
       ) : null}
       {messages.map((message) => (
-        <MessageBubble key={message.id} message={message} showSender={showSender} />
+        <MessageBubble
+          key={message.id}
+          message={message}
+          showSender={showSender}
+          highlightQueryText={highlightQuery}
+        />
       ))}
     </div>
   )

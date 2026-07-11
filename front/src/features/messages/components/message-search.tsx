@@ -5,12 +5,21 @@ export interface MessageSearchProps {
   query: string
   onQueryChange: (query: string) => void
   onClose: () => void
+  matchCount?: number
 }
 
-export function MessageSearch({ open, query, onQueryChange, onClose }: MessageSearchProps) {
+export function MessageSearch({
+  open,
+  query,
+  onQueryChange,
+  onClose,
+  matchCount,
+}: MessageSearchProps) {
   if (!open) {
     return null
   }
+
+  const normalizedQuery = query.trim()
 
   return (
     <div className="border-b border-border bg-bg-elevated px-5 py-3">
@@ -27,6 +36,13 @@ export function MessageSearch({ open, query, onQueryChange, onClose }: MessageSe
           Закрыть
         </Button>
       </div>
+      {normalizedQuery ? (
+        <p className="mt-2 text-caption text-content-faint">
+          {matchCount
+            ? `Найдено: ${matchCount}`
+            : 'Ничего не найдено'}
+        </p>
+      ) : null}
     </div>
   )
 }

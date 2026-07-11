@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { IconButton, SearchIcon } from '@/components/ui'
 import { getChatSubtitle } from '@/features/chats/lib/chat-meta'
 import { useChatsStore } from '@/features/chats/store/chats-store'
@@ -10,6 +10,7 @@ import { MessageSearch } from '@/features/messages/components/message-search'
 import { useMessageEvents } from '@/features/messages/hooks/use-message-events'
 import { useMessagePagination } from '@/features/messages/hooks/use-message-pagination'
 import { useSendMessage } from '@/features/messages/hooks/use-send-message'
+import { filterMessagesByQuery } from '@/features/messages/lib/search-query'
 import {
   useActiveChatMessages,
   useMessagesStore,
@@ -61,6 +62,11 @@ export function ChatArea() {
   }
 
   const showSender = activeChat.type === 'group'
+  const trimmedSearchQuery = searchQuery.trim()
+  const visibleMessages = useMemo(
+    () => filterMessagesByQuery(messages, trimmedSearchQuery),
+    [messages, trimmedSearchQuery],
+  )
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-bg">
@@ -85,6 +91,7 @@ export function ChatArea() {
         open={isSearchOpen}
         query={searchQuery}
         onQueryChange={setSearchQuery}
+        matchCount={trimmedSearchQuery ? visibleMessages.length : undefined}
         onClose={() => {
           setIsSearchOpen(false)
           setSearchQuery('')
@@ -92,11 +99,13 @@ export function ChatArea() {
       />
 
       <MessageList
-        messages={messages}
+        messages={visibleMessages}
         showSender={showSender}
         containerRef={containerRef}
         onScroll={handleScroll}
         isLoadingMore={isLoadingMore}
+        highlightQuery={trimmedSearchQuery || undefined}
+        emptyText={trimmedSearchQuery ? 'Ничего не найдено' : 'Сообщений пока нет'}
       />
 
       <footer className="border-t border-border px-5 py-4">
