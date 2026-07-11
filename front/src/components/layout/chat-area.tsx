@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { IconButton, SearchIcon } from '@/components/ui'
 import { getChatSubtitle } from '@/features/chats/lib/chat-meta'
 import { useChatsStore } from '@/features/chats/store/chats-store'
@@ -6,6 +6,7 @@ import { mockMessages } from '@/features/chats/data/mock-chats'
 import { ConnectionStatus } from '@/features/messages/components/connection-status'
 import { MessageComposer } from '@/features/messages/components/message-composer'
 import { MessageList } from '@/features/messages/components/message-list'
+import { MessageSearch } from '@/features/messages/components/message-search'
 import { useMessageEvents } from '@/features/messages/hooks/use-message-events'
 import { useMessagePagination } from '@/features/messages/hooks/use-message-pagination'
 import { useSendMessage } from '@/features/messages/hooks/use-send-message'
@@ -26,6 +27,13 @@ export function ChatArea() {
   const { sendMessage } = useSendMessage(activeChatId ?? '')
   useMessageEvents(activeChatId ?? '')
   const { containerRef, handleScroll, isLoadingMore } = useMessagePagination(activeChatId)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    setIsSearchOpen(false)
+    setSearchQuery('')
+  }, [activeChatId])
 
   useEffect(() => {
     setMessagesActiveChatId(activeChatId ?? null)
@@ -65,10 +73,23 @@ export function ChatArea() {
             <ConnectionStatus />
           </div>
         </div>
-        <IconButton label="Поиск по сообщениям">
+        <IconButton
+          label="Поиск по сообщениям"
+          onClick={() => setIsSearchOpen((open) => !open)}
+        >
           <SearchIcon />
         </IconButton>
       </header>
+
+      <MessageSearch
+        open={isSearchOpen}
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+        onClose={() => {
+          setIsSearchOpen(false)
+          setSearchQuery('')
+        }}
+      />
 
       <MessageList
         messages={messages}
