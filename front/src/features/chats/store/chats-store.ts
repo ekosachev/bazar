@@ -9,7 +9,7 @@ interface ChatsState {
   activeChatId: string | undefined
   setActiveChatId: (chatId: string) => void
   createGroupChat: (title: string, participantIds: string[]) => Promise<string>
-  createChannelChat: (title: string, description: string) => string
+  createChannelChat: (title: string, description: string) => Promise<string>
   openDirectChat: (userId: string, displayName: string) => string
   isChatAdmin: (chatId: string, userId: string | undefined) => boolean
   addParticipant: (chatId: string, userId: string) => void
@@ -46,17 +46,18 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
     return chat.id
   },
 
-  createChannelChat: (title, description) => {
-    const id = generateChatId()
+  createChannelChat: async (title, description) => {
+    const response = await chatsApi.createChannelChat(title, description.trim())
+
     const chat: Chat = {
-      id,
+      id: response.id,
       type: 'channel',
-      title,
-      description: description.trim() || undefined,
-      lastMessageAt: new Date().toISOString(),
+      title: response.title,
+      description: response.description || undefined,
+      lastMessageAt: response.created_at,
     }
-    set((state) => ({ chats: [chat, ...state.chats], activeChatId: id }))
-    return id
+    set((state) => ({ chats: [chat, ...state.chats], activeChatId: chat.id }))
+    return chat.id
   },
 
   openDirectChat: (userId, displayName) => {

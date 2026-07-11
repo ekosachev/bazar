@@ -16,23 +16,34 @@ export function CreateChannelModal({ open, onClose }: CreateChannelModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [titleError, setTitleError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   function handleClose() {
     setTitle('')
     setDescription('')
     setTitleError(null)
+    setFormError(null)
     onClose()
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const nextTitleError = validateChatTitle(title) ?? null
     setTitleError(nextTitleError)
     if (nextTitleError) return
 
-    createChannelChat(title.trim(), description)
-    handleClose()
+    setFormError(null)
+    setIsSubmitting(true)
+    try {
+      await createChannelChat(title.trim(), description)
+      handleClose()
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Не удалось создать точку')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -71,8 +82,10 @@ export function CreateChannelModal({ open, onClose }: CreateChannelModalProps) {
           />
         </div>
 
-        <Button type="submit" variant="primary" className="w-full">
-          Создать точку
+        {formError ? <p className="text-caption text-danger">{formError}</p> : null}
+
+        <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Создаём…' : 'Создать точку'}
         </Button>
       </form>
     </Modal>
