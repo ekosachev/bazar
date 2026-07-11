@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ekosachev/bazar/internal/chat"
@@ -25,6 +26,29 @@ type UserModel struct {
 	ChatModels    []chat.ChatModel `gorm:"many2many:chat_member_models;"`
 
 	CreatedAt time.Time
+}
+
+func (u *UserModel) IntoDTO() *UserDTO {
+	return &UserDTO{
+		ID:           u.ID,
+		Username:     u.Username,
+		DisplayName:  u.DisplayName,
+		Email:        u.Email,
+		PasswordHash: u.PasswordHash,
+		AvatarUrl:    u.AvatarUrl,
+		CreatedAt:    u.CreatedAt,
+	}
+}
+
+func (u *UserDTO) IntoModel() *UserModel {
+	return &UserModel{
+		ID:           u.ID,
+		Username:     u.Username,
+		DisplayName:  u.DisplayName,
+		Email:        u.Email,
+		AvatarUrl:    u.AvatarUrl,
+		PasswordHash: u.PasswordHash,
+	}
 }
 
 type UserRepository struct {
@@ -76,6 +100,22 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*U
 	}, nil
 }
 
+func (r *UserRepository) SearchByUsername(ctx context.Context, username string) ([]UserDTO, error) {
+	var result []UserDTO
+
+	users, err := gorm.G[UserModel](r.db).Where("username ILIKE ?", fmt.Sprintf("%%%s%%", username)).Find(ctx)
+	if err != nil {
+		return result, err
+	}
+
+	result = make([]UserDTO, len(users))
+	for i, u := range users {
+		result[i] = *u.IntoDTO()
+	}
+
+	return result, nil
+}
+
 func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*UserDTO, error) {
 	user, err := gorm.G[UserModel](r.db).Where(UserModel{ID: userID}).First(ctx)
 	if err != nil {
@@ -117,4 +157,9 @@ func (r *UserRepository) GetUserChats(ctx context.Context, userID uuid.UUID) ([]
 	}
 
 	return result, nil
+}
+
+func (r *UserRepository) UpdateUser(ctx context.Context, user *UserDTO) error {
+	_, err := gorm.G[UserModel](r.db).Where("id = ?", user.ID).Updates(ctx, *user.IntoModel())
+	return err
 }
