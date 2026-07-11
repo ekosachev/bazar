@@ -299,3 +299,41 @@ func (s *ChatService) FindDirectChat(ctx context.Context, userID uuid.UUID, othe
 
 	return chat.IntoResponse(), nil
 }
+
+func (s *ChatService) UpdateChat(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	request UpdateChatRequest,
+) (*ChatResponse, error) {
+	role, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	if *role != RoleOwner {
+		return nil, &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "update chat",
+		}
+	}
+	chat, err := s.repo.GetByID(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.Title != nil {
+		chat.Title = *request.Title
+	}
+	if request.Description != nil {
+		chat.Description = *request.Description
+	}
+
+	err = s.repo.UpdateChat(ctx, chat)
+	if err != nil {
+		return nil, err
+	}
+
+	return chat.IntoResponse(), nil
+}
