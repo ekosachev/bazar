@@ -1,12 +1,14 @@
 import { create } from 'zustand'
-import * as chatsApi from '@/features/chats/api/chats-api'
+import * as authApi from '@/features/auth/api/auth-api'
 import { useAuthStore } from '@/features/auth/store/auth-store'
-import { mockChats } from '@/features/chats/data/mock-chats'
-import type { Chat } from '@/types/chat'
+import * as chatsApi from '@/features/chats/api/chats-api'
+import type { Chat, ChatType } from '@/types/chat'
 
 interface ChatsState {
   chats: Chat[]
   activeChatId: string | undefined
+  isLoadingChats: boolean
+  loadChats: () => Promise<void>
   setActiveChatId: (chatId: string) => void
   createGroupChat: (title: string, participantIds: string[]) => Promise<string>
   createChannelChat: (title: string, description: string) => Promise<string>
@@ -16,9 +18,62 @@ interface ChatsState {
   removeParticipant: (chatId: string, userId: string) => void
 }
 
+async function loadChatFromMembership(
+  membership: chatsApi.ChatMemberApiResponse,
+  currentUserId: string | undefined,
+): Promise<Chat> {
+  const details = await chatsApi.getChatById(membership.chat_id)
+  const members = await chatsApi.getChatMembers(details.id)
+
+  const participantIds = members.map((member) => member.user_id)
+  const adminIds = members
+    .filter((member) => member.role === 'owner' || member.role === 'admin')
+    .map((member) => member.user_id)
+
+  if (details.chat_type === 'direct') {
+    const peer = members.find((member) => member.user_id !== currentUserId)
+    const peerUser = peer ? await authApi.getUserById(peer.user_id).catch(() => null) : null
+
+    return {
+      id: details.id,
+      type: 'direct',
+      title: peerUser?.displayName ?? 'Личный чат',
+      peerUserId: peer?.user_id,
+      lastMessageAt: details.created_at,
+    }
+  }
+
+  return {
+    id: details.id,
+    type: details.chat_type as ChatType,
+    title: details.title,
+    description: details.description || undefined,
+    lastMessageAt: details.created_at,
+    participantIds,
+    adminIds,
+  }
+}
+
 export const useChatsStore = create<ChatsState>((set, get) => ({
-  chats: mockChats,
-  activeChatId: mockChats[0]?.id,
+  chats: [],
+  activeChatId: undefined,
+  isLoadingChats: false,
+
+  loadChats: async () => {
+    set({ isLoadingChats: true })
+    try {
+      const currentUserId = useAuthStore.getState().user?.id
+      const memberships = await chatsApi.getMyChats()
+
+      const chats = await Promise.all(
+        memberships.map((membership) => loadChatFromMembership(membership, currentUserId)),
+      )
+
+      set((state) => ({ chats, activeChatId: state.activeChatId ?? chats[0]?.id }))
+    } finally {
+      set({ isLoadingChats: false })
+    }
+  },
 
   setActiveChatId: (chatId) => set({ activeChatId: chatId }),
 

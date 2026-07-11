@@ -30,3 +30,24 @@ export function createDirectChat(targetUserId: string) {
     body: JSON.stringify({ target_user_id: targetUserId }),
   })
 }
+
+export interface ChatMemberApiResponse {
+  chat_id: string
+  user_id: string
+  role: 'member' | 'admin' | 'owner'
+  last_read_message_id: string | null
+  invited_by: string
+  created_at: string
+}
+
+export function getMyChats() {
+  return apiFetch<ChatMemberApiResponse[]>('/user/my_chats', { method: 'GET' })
+}
+
+export function getChatById(chatId: string) {
+  return apiFetch<ChatApiResponse>(`/chat/${chatId}`, { method: 'GET' })
+}
+
+export function getChatMembers(chatId: string) {
+  return apiFetch<ChatMemberApiResponse[]>(`/chat/${chatId}/members`, { method: 'GET' })
+}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Input } from '@/components/ui'
 import { Logo } from '@/components/layout/logo'
 import { LogoutButton } from '@/features/auth/components/logout-button'
@@ -12,9 +12,15 @@ export function Sidebar() {
   const chats = useChatsStore((state) => state.chats)
   const activeChatId = useChatsStore((state) => state.activeChatId)
   const setActiveChatId = useChatsStore((state) => state.setActiveChatId)
+  const isLoadingChats = useChatsStore((state) => state.isLoadingChats)
+  const loadChats = useChatsStore((state) => state.loadChats)
   const sortedChats = useMemo(() => sortChatsByActivity(chats), [chats])
 
   const [participantsChatId, setParticipantsChatId] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadChats()
+  }, [loadChats])
 
   return (
     <aside className="flex h-full w-full max-w-sm flex-col border-r border-border bg-bg-elevated">
@@ -30,6 +36,16 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3" aria-label="Список чатов">
+        {isLoadingChats && sortedChats.length === 0 ? (
+          <p className="px-3 py-2 text-body text-content-muted">Загрузка чатов…</p>
+        ) : null}
+
+        {!isLoadingChats && sortedChats.length === 0 ? (
+          <p className="px-3 py-2 text-body text-content-muted">
+            Пока нет чатов — создайте базар, точку или напишите кому-нибудь
+          </p>
+        ) : null}
+
         {sortedChats.map((chat) => (
           <ChatListItem
             key={chat.id}
