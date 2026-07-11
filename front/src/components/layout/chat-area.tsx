@@ -34,6 +34,10 @@ export function ChatArea() {
 
   const trimmedSearchQuery = searchQuery.trim()
   const { matches, activeMatchId, scrollToMessage } = useMessageSearch(messages, searchQuery)
+  const visibleMessages = useMemo(
+    () => filterMessagesByQuery(messages, trimmedSearchQuery),
+    [messages, trimmedSearchQuery],
+  )
 
   useEffect(() => {
     setIsSearchOpen(false)
@@ -66,10 +70,6 @@ export function ChatArea() {
   }
 
   const showSender = activeChat.type === 'group'
-  const visibleMessages = useMemo(
-    () => filterMessagesByQuery(messages, trimmedSearchQuery),
-    [messages, trimmedSearchQuery],
-  )
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col bg-bg">
