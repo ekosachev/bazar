@@ -299,3 +299,83 @@ func (s *ChatService) FindDirectChat(ctx context.Context, userID uuid.UUID, othe
 
 	return chat.IntoResponse(), nil
 }
+
+func (s *ChatService) UpdateChat(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	request UpdateChatRequest,
+) (*ChatResponse, error) {
+	role, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	if *role != RoleOwner {
+		return nil, &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "update chat",
+		}
+	}
+	chat, err := s.repo.GetByID(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.Title != nil {
+		chat.Title = *request.Title
+	}
+	if request.Description != nil {
+		chat.Description = *request.Description
+	}
+
+	err = s.repo.UpdateChat(ctx, chat)
+	if err != nil {
+		return nil, err
+	}
+
+	return chat.IntoResponse(), nil
+}
+
+func (s *ChatService) SetRole(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	updaterID uuid.UUID,
+	newRole ChatMemberRole,
+) error {
+	updaterRole, err := s.GetUserRoleForChat(ctx, updaterID, chatID)
+	if err != nil {
+		return err
+	}
+
+	if *updaterRole != RoleOwner {
+		return &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "update user roles",
+		}
+	}
+
+	userRole, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return err
+	}
+	if *userRole == RoleOwner {
+		return &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "change role of the owner",
+		}
+	}
+	if newRole == RoleOwner {
+		return &ErrInsufficientPermissions{
+			ChatID: chatID,
+			UserID: userID,
+			Action: "make user an owner",
+		}
+	}
+
+	return s.repo.SetRole(ctx, userID, chatID, newRole)
+}

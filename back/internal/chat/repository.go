@@ -117,6 +117,18 @@ func (cm *ChatModel) IntoDTO() *ChatDTO {
 	}
 }
 
+func (cdto *ChatDTO) IntoModel() *ChatModel {
+	return &ChatModel{
+		ID:          cdto.ID,
+		Type:        cdto.Type,
+		Title:       cdto.Title,
+		Description: cdto.Description,
+		AvatarURL:   cdto.AvatarURL,
+		CreatedBy:   cdto.CreatedBy,
+		CreatedAt:   cdto.CreatedAt,
+	}
+}
+
 func (r *ChatRepository) GetChatMembers(ctx context.Context, chatID uuid.UUID) ([]ChatMemberDTO, error) {
 	var result []ChatMemberDTO
 	var memberModels []ChatMemberModel
@@ -162,4 +174,22 @@ func (r *ChatRepository) FindDirectChat(ctx context.Context, userID uuid.UUID, o
 	}
 
 	return nil, nil
+}
+
+func (r *ChatRepository) UpdateChat(ctx context.Context, chat *ChatDTO) error {
+	chatModel := chat.IntoModel()
+	_, err := gorm.G[ChatModel](r.db).Where("id = ?", chat.ID).Updates(ctx, *chatModel)
+	return err
+}
+
+func (r *ChatRepository) SetRole(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	newRole ChatMemberRole,
+) error {
+	_, err := gorm.G[ChatMemberModel](r.db).
+		Where("user_model_id = ? AND chat_model_id = ?", userID, chatID).
+		Update(ctx, "role", newRole)
+	return err
 }
