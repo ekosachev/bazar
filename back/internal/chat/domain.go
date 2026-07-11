@@ -108,6 +108,10 @@ type CreateChannelChatRequest struct {
 	Description string `json:"description"`
 }
 
+type ChatMemberEditRequest struct {
+	UserID uuid.UUID `json:"user_id" binding:"required"`
+}
+
 type ErrAlreadyMember struct {
 	ChatID uuid.UUID
 	UserID uuid.UUID

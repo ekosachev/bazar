@@ -52,6 +52,13 @@ func (r *ChatRepository) AddUserToChat(ctx context.Context, chatMember *ChatMemb
 	return nil
 }
 
+func (r *ChatRepository) RemoveUserFromChat(ctx context.Context, userID uuid.UUID, chatID uuid.UUID) error {
+	_, err := gorm.G[ChatMemberModel](r.db).
+		Where("user_model_id = ? AND chat_model_id = ?", userID, chatID).
+		Delete(ctx)
+	return err
+}
+
 func (r *ChatRepository) GetByID(ctx context.Context, chatID uuid.UUID) (*ChatDTO, error) {
 	chatModel, err := gorm.G[ChatModel](r.db).Where("id = ?", chatID).First(ctx)
 	if err != nil {
