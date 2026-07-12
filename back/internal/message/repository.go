@@ -89,3 +89,23 @@ func (r *MessageRepository) FindMessagesByContent(ctx context.Context, chatID uu
 
 	return result, nil
 }
+
+func (r *MessageRepository) CreateMessage(ctx context.Context, message *MessageDTO) error {
+	model := MessageModel{
+		ChatModelID: message.ChatModelID,
+		SenderID:    message.SenderID,
+		Content:     message.Content,
+		ReplyToID:   message.ReplyToID,
+	}
+
+	err := gorm.G[MessageModel](r.db).Create(ctx, &model)
+	if err != nil {
+		return err
+	}
+
+	message.ID = model.ID
+	message.CreatedAt = model.CreatedAt
+	message.UpdatedAt = model.UpdatedAt
+
+	return nil
+}

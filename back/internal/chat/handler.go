@@ -36,6 +36,7 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 			accessTokenGroup.POST("/channel", h.createChannelChat)
 
 			accessTokenGroup.GET("/:id/messages", h.findMessages)
+			accessTokenGroup.POST("/:id/messages", h.createMessage)
 			accessTokenGroup.GET("/:id/messages/search", h.findMessagesByContent)
 		}
 	}
@@ -428,5 +429,51 @@ func (h *ChatHandler) findMessagesByContent(c *gin.Context) {
 	c.JSON(http.StatusOK, utils.APIResponse{
 		Success: true,
 		Data:    result,
+	})
+}
+
+func (h *ChatHandler) createMessage(c *gin.Context) {
+	chatID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var req struct {
+		Content   string     `json:"content" binding:"required"`
+		ReplyToID *uuid.UUID `json:"reply_to_id"`
+	}
+
+	if err = c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	result, err := h.service.CreateMessage(c, chatID, userID, req.Content, req.ReplyToID)
+	if err != nil {
+		var notMember *ErrNotMember
+		if errors.As(err, &notMember) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		var notFound *message.ErrNotFound
+		if errors.As(err, &notFound) {
+			utils.SendError(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusCreated, utils.APIResponse{
+		Success: true,
+		Data:    *result.IntoResponse(),
 	})
 }

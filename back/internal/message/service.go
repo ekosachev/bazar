@@ -25,3 +25,7 @@ func (s *MessageService) FindMessages(ctx context.Context, chatID uuid.UUID, bef
 func (s *MessageService) FindMessagesByContent(ctx context.Context, chatID uuid.UUID, query string) ([]MessageDTO, error) {
 	return s.repo.FindMessagesByContent(ctx, chatID, query)
 }
+
+func (s *MessageService) CreateMessage(ctx context.Context, message *MessageDTO) error {
+	return s.repo.CreateMessage(ctx, message)
+}
