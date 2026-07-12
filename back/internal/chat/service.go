@@ -173,15 +173,15 @@ func (s *ChatService) AddUserToChat(
 	role ChatMemberRole,
 ) error {
 	inviterRole, err := s.GetUserRoleForChat(ctx, inviterID, chatID)
-	if err != nil {
+	if err != nil && userID != inviterID {
 		return err
-	}
-
-	if *inviterRole == RoleMember {
-		return &ErrInsufficientPermissions{
-			ChatID: chatID,
-			UserID: userID,
-			Action: "add a user",
+	} else {
+		if *inviterRole == RoleMember {
+			return &ErrInsufficientPermissions{
+				ChatID: chatID,
+				UserID: userID,
+				Action: "add a user",
+			}
 		}
 	}
 
