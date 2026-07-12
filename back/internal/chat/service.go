@@ -173,15 +173,15 @@ func (s *ChatService) AddUserToChat(
 	role ChatMemberRole,
 ) error {
 	inviterRole, err := s.GetUserRoleForChat(ctx, inviterID, chatID)
-	if err != nil {
+	if err != nil && userID != inviterID {
 		return err
-	}
-
-	if *inviterRole == RoleMember {
-		return &ErrInsufficientPermissions{
-			ChatID: chatID,
-			UserID: userID,
-			Action: "add a user",
+	} else {
+		if *inviterRole == RoleMember {
+			return &ErrInsufficientPermissions{
+				ChatID: chatID,
+				UserID: userID,
+				Action: "add a user",
+			}
 		}
 	}
 
@@ -457,4 +457,61 @@ func (s *ChatService) CreateMessage(
 	}
 
 	return &message, nil
+}
+
+func (s *ChatService) UpdateMessage(
+	ctx context.Context,
+	userID uuid.UUID,
+	messageID uuid.UUID,
+	newContent string,
+) error {
+	messageToUpdate, err := s.messageService.GetMessageByID(ctx, messageID)
+	if err != nil {
+		return err
+	}
+
+	if messageToUpdate == nil {
+		return &message.ErrNotFound{ID: messageID}
+	}
+
+	if messageToUpdate.SenderID != userID {
+		return &ErrInsufficientPermissions{
+			UserID: userID,
+			ChatID: messageToUpdate.ChatModelID,
+			Action: "update other's messages",
+		}
+	}
+
+	return s.messageService.UpdateMessage(ctx, messageID, newContent)
+}
+
+func (s *ChatService) DeleteMessage(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	messageID uuid.UUID,
+) error {
+	messageToDelete, err := s.messageService.GetMessageByID(ctx, messageID)
+	if err != nil {
+		return err
+	}
+
+	if messageToDelete == nil {
+		return &message.ErrNotFound{ID: messageID}
+	}
+
+	role, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return err
+	}
+
+	if messageToDelete.SenderID != userID || *role != RoleMember {
+		return &ErrInsufficientPermissions{
+			UserID: userID,
+			ChatID: messageToDelete.ChatModelID,
+			Action: "update other's messages",
+		}
+	}
+
+	return s.messageService.DeleteMessage(ctx, messageID)
 }

@@ -29,3 +29,27 @@ func (s *MessageService) FindMessagesByContent(ctx context.Context, chatID uuid.
 func (s *MessageService) CreateMessage(ctx context.Context, message *MessageDTO) error {
 	return s.repo.CreateMessage(ctx, message)
 }
+
+func (s *MessageService) UpdateMessage(ctx context.Context, id uuid.UUID, newContent string) error {
+	existingMessage, err := s.GetMessageByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existingMessage == nil {
+		return &ErrNotFound{ID: id}
+	}
+
+	return s.repo.UpdateMessage(ctx, id, newContent)
+}
+
+func (s *MessageService) DeleteMessage(ctx context.Context, id uuid.UUID) error {
+	existingMessage, err := s.GetMessageByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existingMessage == nil {
+		return &ErrNotFound{ID: id}
+	}
+
+	return s.repo.DeleteMessage(ctx, id)
+}
