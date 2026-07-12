@@ -1,6 +1,5 @@
-import { Avatar, Badge, IconButton } from '@/components/ui'
+import { Avatar, Badge } from '@/components/ui'
 import { ChatTypeIcon } from '@/features/chats/components/chat-type-icon'
-import { PeopleIcon } from '@/features/chats/components/people-icon'
 import { getChatTypeLabel } from '@/features/chats/lib/chat-labels'
 import { formatChatTimestamp } from '@/features/chats/lib/format-time'
 import { cn } from '@/lib/cn'
@@ -10,10 +9,9 @@ interface ChatListItemProps {
   chat: Chat
   active?: boolean
   onSelect?: (chatId: string) => void
-  onOpenParticipants?: (chatId: string) => void
 }
 
-export function ChatListItem({ chat, active = false, onSelect, onOpenParticipants }: ChatListItemProps) {
+export function ChatListItem({ chat, active = false, onSelect }: ChatListItemProps) {
   const typeLabel = getChatTypeLabel(chat.type)
 
   return (
@@ -63,18 +61,6 @@ export function ChatListItem({ chat, active = false, onSelect, onOpenParticipant
           ) : null}
         </div>
       </div>
-
-      {chat.type === 'group' && onOpenParticipants ? (
-        <IconButton
-          label="Участники базара"
-          onClick={(event) => {
-            event.stopPropagation()
-            onOpenParticipants(chat.id)
-          }}
-        >
-          <PeopleIcon />
-        </IconButton>
-      ) : null}
     </div>
   )
 }
