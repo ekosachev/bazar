@@ -53,14 +53,14 @@ export function getChatMembers(chatId: string) {
 }
 
 export function addChatMember(chatId: string, userId: string) {
-  return apiFetch<void>(`/chat/${chatId}/members`, {
+  return apiFetch<void>(`/chat/${chatId}/members/add`, {
     method: 'PUT',
     body: JSON.stringify({ user_id: userId }),
   })
 }
 
 export function removeChatMember(chatId: string, userId: string) {
-  return apiFetch<void>(`/chat/${chatId}/members`, {
+  return apiFetch<void>(`/chat/${chatId}/members/remove`, {
     method: 'PUT',
     body: JSON.stringify({ user_id: userId }),
   })
