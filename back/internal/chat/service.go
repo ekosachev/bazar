@@ -56,7 +56,14 @@ func (s *ChatService) CreateDirectChat(
 	if err = s.AddUserToChat(ctx, chatDTO.ID, creatorID, creatorID, RoleMember); err != nil {
 		return nil, err
 	}
-	if err = s.AddUserToChat(ctx, chatDTO.ID, targetID, creatorID, RoleMember); err != nil {
+
+	if err = s.repo.AddUserToChat(ctx, &ChatMemberDTO{
+		ChatModelID:       chatDTO.ID,
+		UserModelID:       targetID,
+		Role:              RoleMember,
+		LastReadMessageID: nil,
+		InvitedBy:         creatorID,
+	}); err != nil {
 		return nil, err
 	}
 
