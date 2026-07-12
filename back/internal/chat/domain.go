@@ -127,6 +127,10 @@ type FindMessagesRequest struct {
 	Limit  int       `form:"limit" binding:"required"`
 }
 
+type FindMessagesByContentRequest struct {
+	Query string `form:"query" binding:"required"`
+}
+
 type ErrAlreadyMember struct {
 	ChatID uuid.UUID
 	UserID uuid.UUID

@@ -401,3 +401,22 @@ func (s *ChatService) FindMessages(
 
 	return &result, err
 }
+
+func (s *ChatService) FindMessagesByContent(
+	ctx context.Context,
+	chatID uuid.UUID,
+	userID uuid.UUID,
+	query string,
+) (*[]message.MessageDTO, error) {
+	_, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.messageService.FindMessagesByContent(ctx, chatID, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, err
+}

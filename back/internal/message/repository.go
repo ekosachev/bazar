@@ -3,6 +3,7 @@ package message
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -49,6 +50,29 @@ func (r *MessageRepository) FindMessages(
 		Where("chat_model_id = ?", chatID).
 		Where("created_at < ?", beforeMessage.CreatedAt).
 		Limit(limit).
+		Find(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return result, nil
+		}
+
+		return nil, err
+	}
+
+	result = make([]MessageDTO, len(messages))
+	for i, m := range messages {
+		result[i] = *m.IntoDTO()
+	}
+
+	return result, nil
+}
+
+func (r *MessageRepository) FindMessagesByContent(ctx context.Context, chatID uuid.UUID, query string) ([]MessageDTO, error) {
+	var result []MessageDTO
+
+	messages, err := gorm.G[MessageModel](r.db).
+		Where("chat_model_id = ?", chatID).
+		Where("content ILIKE ?", fmt.Sprintf("%%%s%%", query)).
 		Find(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
