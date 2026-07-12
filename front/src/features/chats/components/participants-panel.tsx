@@ -71,6 +71,8 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
 
   const excludeUserIds = useMemo(
     () => (currentUserId ? [...participantIds, currentUserId] : participantIds),
+    // participantIdsKey is the stable, deduplicated form of participantIds.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentUserId, participantIdsKey],
   )
 
@@ -126,7 +128,10 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
     return () => {
       cancelled = true
     }
-  }, [chatId, currentUser, participantIds, participantIdsKey])
+    // participantIds is a new array every render — participantIdsKey is the
+    // stable dependency that actually reflects when membership changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId, currentUser, participantIdsKey])
 
   function handleClose() {
     setIsAddingOpen(false)

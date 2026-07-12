@@ -68,7 +68,10 @@ export function useUserSearch({
       cancelled = true
       window.clearTimeout(timeoutId)
     }
-  }, [enabled, excludeKey, excludeUserIds, query])
+    // excludeKey is the stable, deduplicated form of excludeUserIds — the array
+    // itself is intentionally omitted since callers pass a new reference every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, excludeKey, query])
 
   return { users, isSearching, error }
 }
