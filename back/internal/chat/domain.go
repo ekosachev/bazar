@@ -122,6 +122,11 @@ type SetRoleRequest struct {
 	NewRole  string    `json:"new_role" binding:"required"`
 }
 
+type FindMessagesRequest struct {
+	Before uuid.UUID `form:"before" binding:"required"`
+	Limit  int       `form:"limit" binding:"required"`
+}
+
 type ErrAlreadyMember struct {
 	ChatID uuid.UUID
 	UserID uuid.UUID

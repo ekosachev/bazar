@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ekosachev/bazar/internal/chat"
+	"github.com/ekosachev/bazar/internal/message"
 	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/ekosachev/bazar/internal/user"
 	"gorm.io/driver/postgres"
@@ -44,6 +45,7 @@ func ConnectToDb(config DatabaseConfig) (*gorm.DB, error) {
 		&user.UserModel{},
 		&refreshtoken.RefreshTokenModel{},
 		&chat.ChatModel{},
+		&message.MessageModel{},
 	)
 
 	return db, nil

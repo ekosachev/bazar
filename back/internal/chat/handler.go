@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/ekosachev/bazar/internal/message"
 	"github.com/ekosachev/bazar/internal/middleware"
 	"github.com/ekosachev/bazar/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -26,13 +27,15 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 			accessTokenGroup.GET("/:id", h.getByID)
 			accessTokenGroup.PUT("/:id", h.updateChat)
 			accessTokenGroup.GET("/:id/members", h.getChatMembers)
-			accessTokenGroup.PUT("/:id/members", h.addUserToChat)
-			accessTokenGroup.PUT("/:id/members", h.removeUserFromChat)
+			accessTokenGroup.PUT("/:id/members/add", h.addUserToChat)
+			accessTokenGroup.PUT("/:id/members/remove", h.removeUserFromChat)
 			accessTokenGroup.PUT("/:id/members/set_role", h.setRole)
 			accessTokenGroup.DELETE("/:id/leave", h.leaveChat)
 			accessTokenGroup.POST("/direct", h.createDirectChat)
 			accessTokenGroup.POST("/group", h.createGroupChat)
 			accessTokenGroup.POST("/channel", h.createChannelChat)
+
+			accessTokenGroup.GET("/:id/messages", h.findMessages)
 		}
 	}
 }
@@ -342,5 +345,46 @@ func (h *ChatHandler) setRole(c *gin.Context) {
 
 	c.JSON(http.StatusOK, utils.APIResponse{
 		Success: true,
+	})
+}
+
+func (h *ChatHandler) findMessages(c *gin.Context) {
+	chatID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var req FindMessagesRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	messages, err := h.service.FindMessages(c, chatID, userID, req.Before, req.Limit)
+	if err != nil {
+		var notMember *ErrNotMember
+		if errors.As(err, &notMember) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+	}
+
+	result := make([]message.MessageResponse, len(*messages))
+	for i, m := range *messages {
+		result[i] = *m.IntoResponse()
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{
+		Success: true,
+		Data:    result,
 	})
 }
