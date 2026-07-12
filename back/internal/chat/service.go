@@ -5,16 +5,18 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ekosachev/bazar/internal/message"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type ChatService struct {
-	repo *ChatRepository
+	repo           *ChatRepository
+	messageService *message.MessageService
 }
 
-func NewChatService(repo *ChatRepository) *ChatService {
-	return &ChatService{repo: repo}
+func NewChatService(repo *ChatRepository, messageService *message.MessageService) *ChatService {
+	return &ChatService{repo: repo, messageService: messageService}
 }
 
 func (s *ChatService) CreateDirectChat(
@@ -378,4 +380,24 @@ func (s *ChatService) SetRole(
 	}
 
 	return s.repo.SetRole(ctx, userID, chatID, newRole)
+}
+
+func (s *ChatService) FindMessages(
+	ctx context.Context,
+	chatID uuid.UUID,
+	userID uuid.UUID,
+	before uuid.UUID,
+	limit int,
+) (*[]message.MessageDTO, error) {
+	_, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.messageService.FindMessages(ctx, chatID, before, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, err
 }
