@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Avatar, Button, IconButton, Input } from '@/components/ui'
+import { Avatar, Badge, Button, IconButton, Input } from '@/components/ui'
 import * as authApi from '@/features/auth/api/auth-api'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { Modal } from '@/features/chats/components/modal'
@@ -192,6 +192,7 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
               <span className="min-w-0 flex-1 truncate text-body text-content">
                 {user.displayName}
               </span>
+              {chat?.adminIds?.includes(user.id) ? <Badge variant="neutral">Админ</Badge> : null}
               {isAdmin || user.id === currentUserId ? (
                 <IconButton
                   label={user.id === currentUserId ? 'Выйти из базара' : `Удалить ${user.displayName}`}
