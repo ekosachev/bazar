@@ -18,6 +18,7 @@ interface ChatsState {
   addParticipant: (chatId: string, userId: string) => Promise<void>
   removeParticipant: (chatId: string, userId: string) => Promise<void>
   updateChat: (chatId: string, payload: { title?: string; description?: string }) => Promise<void>
+  setMemberRole: (chatId: string, userId: string, role: 'admin' | 'member') => Promise<void>
 }
 
 async function loadChatFromMembership(
@@ -149,6 +150,11 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
 
   updateChat: async (chatId, payload) => {
     await chatsApi.updateChat(chatId, payload)
+    await get().refreshChat(chatId)
+  },
+
+  setMemberRole: async (chatId, userId, role) => {
+    await chatsApi.setChatMemberRole(chatId, userId, role)
     await get().refreshChat(chatId)
   },
 }))

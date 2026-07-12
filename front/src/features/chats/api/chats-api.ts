@@ -76,3 +76,10 @@ export function updateChat(chatId: string, payload: { title?: string; descriptio
     body: JSON.stringify(payload),
   })
 }
+
+export function setChatMemberRole(chatId: string, userId: string, newRole: 'admin' | 'member') {
+  return apiFetch<void>(`/chat/${chatId}/members/set_role`, {
+    method: 'PUT',
+    body: JSON.stringify({ user_id: userId, new_role: newRole }),
+  })
+}

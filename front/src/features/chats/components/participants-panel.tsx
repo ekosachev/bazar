@@ -54,6 +54,7 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
   const addParticipant = useChatsStore((state) => state.addParticipant)
   const removeParticipant = useChatsStore((state) => state.removeParticipant)
   const updateChat = useChatsStore((state) => state.updateChat)
+  const setMemberRole = useChatsStore((state) => state.setMemberRole)
   const currentUser = useAuthStore((state) => state.user)
   const currentUserId = currentUser?.id
   const isAdmin = Boolean(chat && currentUserId && chat.adminIds?.includes(currentUserId))
@@ -187,6 +188,21 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
     }
   }
 
+  async function handleToggleRole(userId: string, isCurrentlyAdmin: boolean) {
+    if (!chat) return
+
+    setActionError(null)
+    setPendingUserId(userId)
+
+    try {
+      await setMemberRole(chat.id, userId, isCurrentlyAdmin ? 'member' : 'admin')
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Не удалось изменить роль')
+    } finally {
+      setPendingUserId(null)
+    }
+  }
+
   function startEditingChat() {
     if (!chat) return
     setEditTitle(chat.title)
@@ -293,6 +309,18 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
                 {user.displayName}
               </span>
               {chat?.adminIds?.includes(user.id) ? <Badge variant="neutral">Админ</Badge> : null}
+              {isOwner && user.id !== chat?.ownerId && user.id !== currentUserId ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={pendingUserId === user.id}
+                  onClick={() =>
+                    void handleToggleRole(user.id, Boolean(chat?.adminIds?.includes(user.id)))
+                  }
+                >
+                  {chat?.adminIds?.includes(user.id) ? 'Снять админа' : 'Сделать админом'}
+                </Button>
+              ) : null}
               {isAdmin || user.id === currentUserId ? (
                 <IconButton
                   label={user.id === currentUserId ? 'Выйти из базара' : `Удалить ${user.displayName}`}
