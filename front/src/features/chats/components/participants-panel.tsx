@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { Avatar, Badge, Button, IconButton, Input } from '@/components/ui'
 import * as authApi from '@/features/auth/api/auth-api'
 import { useAuthStore } from '@/features/auth/store/auth-store'
@@ -7,6 +7,7 @@ import {
   USER_SEARCH_MIN_LENGTH,
   useUserSearch,
 } from '@/features/chats/hooks/use-user-search'
+import { validateChatTitle } from '@/features/chats/lib/chat-validation'
 import { useChatsStore } from '@/features/chats/store/chats-store'
 import type { User } from '@/types/chat'
 
@@ -52,9 +53,12 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
   const chat = useChatsStore((state) => state.chats.find((item) => item.id === chatId))
   const addParticipant = useChatsStore((state) => state.addParticipant)
   const removeParticipant = useChatsStore((state) => state.removeParticipant)
+  const updateChat = useChatsStore((state) => state.updateChat)
+  const setMemberRole = useChatsStore((state) => state.setMemberRole)
   const currentUser = useAuthStore((state) => state.user)
   const currentUserId = currentUser?.id
   const isAdmin = Boolean(chat && currentUserId && chat.adminIds?.includes(currentUserId))
+  const isOwner = Boolean(chat && currentUserId && chat.ownerId === currentUserId)
 
   const [participants, setParticipants] = useState<User[]>([])
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false)
@@ -65,6 +69,13 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
 
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingUserId, setPendingUserId] = useState<string | null>(null)
+
+  const [isEditingChat, setIsEditingChat] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editTitleError, setEditTitleError] = useState<string | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
+  const [isSavingChat, setIsSavingChat] = useState(false)
 
   const participantIds = chat?.participantIds ?? []
   const participantIdsKey = participantIds.join(',')
@@ -137,6 +148,8 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
     setIsAddingOpen(false)
     setSearchQuery('')
     setActionError(null)
+    setIsEditingChat(false)
+    setEditError(null)
     onClose()
   }
 
@@ -175,6 +188,50 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
     }
   }
 
+  async function handleToggleRole(userId: string, isCurrentlyAdmin: boolean) {
+    if (!chat) return
+
+    setActionError(null)
+    setPendingUserId(userId)
+
+    try {
+      await setMemberRole(chat.id, userId, isCurrentlyAdmin ? 'member' : 'admin')
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Не удалось изменить роль')
+    } finally {
+      setPendingUserId(null)
+    }
+  }
+
+  function startEditingChat() {
+    if (!chat) return
+    setEditTitle(chat.title)
+    setEditDescription(chat.description ?? '')
+    setEditTitleError(null)
+    setEditError(null)
+    setIsEditingChat(true)
+  }
+
+  async function handleSaveChat(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!chat) return
+
+    const nextTitleError = validateChatTitle(editTitle) ?? null
+    setEditTitleError(nextTitleError)
+    if (nextTitleError) return
+
+    setEditError(null)
+    setIsSavingChat(true)
+    try {
+      await updateChat(chat.id, { title: editTitle.trim(), description: editDescription.trim() })
+      setIsEditingChat(false)
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : 'Не удалось сохранить изменения')
+    } finally {
+      setIsSavingChat(false)
+    }
+  }
+
   const trimmedQuery = searchQuery.trim()
 
   return (
@@ -183,6 +240,60 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
       onClose={handleClose}
       title={chat ? `Участники «${chat.title}»` : 'Участники'}
     >
+      {isOwner ? (
+        <div className="mb-4 space-y-3 border-b border-border pb-4">
+          {isEditingChat ? (
+            <form className="space-y-3" onSubmit={handleSaveChat} noValidate>
+              <div className="space-y-1.5">
+                <label className="text-caption text-content-muted" htmlFor="chat-edit-title">
+                  Название
+                </label>
+                <Input
+                  id="chat-edit-title"
+                  value={editTitle}
+                  onChange={(event) => setEditTitle(event.target.value)}
+                  aria-invalid={Boolean(editTitleError)}
+                />
+                {editTitleError ? (
+                  <p className="text-caption text-danger">{editTitleError}</p>
+                ) : null}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-caption text-content-muted" htmlFor="chat-edit-description">
+                  Описание
+                </label>
+                <Input
+                  id="chat-edit-description"
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                />
+              </div>
+
+              {editError ? <p className="text-caption text-danger">{editError}</p> : null}
+
+              <div className="flex gap-2">
+                <Button type="submit" variant="primary" disabled={isSavingChat}>
+                  {isSavingChat ? 'Сохраняем…' : 'Сохранить'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsEditingChat(false)}
+                  disabled={isSavingChat}
+                >
+                  Отмена
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <Button variant="secondary" className="w-full" onClick={startEditingChat}>
+              Изменить название/описание
+            </Button>
+          )}
+        </div>
+      ) : null}
+
       {isLoadingParticipants ? (
         <p className="text-body text-content-muted">Загрузка участников…</p>
       ) : participantsError ? (
@@ -198,6 +309,18 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
                 {user.displayName}
               </span>
               {chat?.adminIds?.includes(user.id) ? <Badge variant="neutral">Админ</Badge> : null}
+              {isOwner && user.id !== chat?.ownerId && user.id !== currentUserId ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={pendingUserId === user.id}
+                  onClick={() =>
+                    void handleToggleRole(user.id, Boolean(chat?.adminIds?.includes(user.id)))
+                  }
+                >
+                  {chat?.adminIds?.includes(user.id) ? 'Снять админа' : 'Сделать админом'}
+                </Button>
+              ) : null}
               {isAdmin || user.id === currentUserId ? (
                 <IconButton
                   label={user.id === currentUserId ? 'Выйти из базара' : `Удалить ${user.displayName}`}

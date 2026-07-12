@@ -17,6 +17,8 @@ interface ChatsState {
   isChatAdmin: (chatId: string, userId: string | undefined) => boolean
   addParticipant: (chatId: string, userId: string) => Promise<void>
   removeParticipant: (chatId: string, userId: string) => Promise<void>
+  updateChat: (chatId: string, payload: { title?: string; description?: string }) => Promise<void>
+  setMemberRole: (chatId: string, userId: string, role: 'admin' | 'member') => Promise<void>
 }
 
 async function loadChatFromMembership(
@@ -73,12 +75,14 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
       lastMessageAt: response.created_at,
       participantIds: allParticipantIds,
       adminIds: currentUserId ? [currentUserId] : [],
+      ownerId: currentUserId,
     }
     set((state) => ({ chats: [chat, ...state.chats], activeChatId: chat.id }))
     return chat.id
   },
 
   createChannelChat: async (title, description) => {
+    const currentUserId = useAuthStore.getState().user?.id
     const response = await chatsApi.createChannelChat(title, description.trim())
 
     const chat: Chat = {
@@ -87,6 +91,8 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
       title: response.title,
       description: response.description || undefined,
       lastMessageAt: response.created_at,
+      adminIds: currentUserId ? [currentUserId] : [],
+      ownerId: currentUserId,
     }
     set((state) => ({ chats: [chat, ...state.chats], activeChatId: chat.id }))
     return chat.id
@@ -139,6 +145,16 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
     }
 
     await chatsApi.removeChatMember(chatId, userId)
+    await get().refreshChat(chatId)
+  },
+
+  updateChat: async (chatId, payload) => {
+    await chatsApi.updateChat(chatId, payload)
+    await get().refreshChat(chatId)
+  },
+
+  setMemberRole: async (chatId, userId, role) => {
+    await chatsApi.setChatMemberRole(chatId, userId, role)
     await get().refreshChat(chatId)
   },
 }))
