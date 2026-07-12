@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Avatar, Button, IconButton, Input } from '@/components/ui'
+import { Avatar, Badge, Button, IconButton, Input } from '@/components/ui'
 import * as authApi from '@/features/auth/api/auth-api'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { Modal } from '@/features/chats/components/modal'
@@ -71,6 +71,8 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
 
   const excludeUserIds = useMemo(
     () => (currentUserId ? [...participantIds, currentUserId] : participantIds),
+    // participantIdsKey is the stable, deduplicated form of participantIds.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentUserId, participantIdsKey],
   )
 
@@ -126,7 +128,10 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
     return () => {
       cancelled = true
     }
-  }, [chatId, currentUser, participantIds, participantIdsKey])
+    // participantIds is a new array every render — participantIdsKey is the
+    // stable dependency that actually reflects when membership changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId, currentUser, participantIdsKey])
 
   function handleClose() {
     setIsAddingOpen(false)
@@ -192,6 +197,7 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
               <span className="min-w-0 flex-1 truncate text-body text-content">
                 {user.displayName}
               </span>
+              {chat?.adminIds?.includes(user.id) ? <Badge variant="neutral">Админ</Badge> : null}
               {isAdmin || user.id === currentUserId ? (
                 <IconButton
                   label={user.id === currentUserId ? 'Выйти из базара' : `Удалить ${user.displayName}`}

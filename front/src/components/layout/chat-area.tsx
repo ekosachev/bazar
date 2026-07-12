@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { IconButton, SearchIcon } from '@/components/ui'
+import { ParticipantsPanel } from '@/features/chats/components/participants-panel'
+import { PeopleIcon } from '@/features/chats/components/people-icon'
 import { getChatSubtitle } from '@/features/chats/lib/chat-meta'
 import { useChatsStore } from '@/features/chats/store/chats-store'
 import { ConnectionStatus } from '@/features/messages/components/connection-status'
@@ -29,6 +31,7 @@ export function ChatArea() {
   const { containerRef, handleScroll, isLoadingMore } = useMessagePagination(activeChatId)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [isParticipantsOpen, setIsParticipantsOpen] = useState(false)
 
   const trimmedSearchQuery = searchQuery.trim()
   const { matches, activeMatchId, scrollToMessage } = useMessageSearch(messages, searchQuery)
@@ -67,12 +70,19 @@ export function ChatArea() {
             <ConnectionStatus />
           </div>
         </div>
-        <IconButton
-          label="Поиск по сообщениям"
-          onClick={() => setIsSearchOpen((open) => !open)}
-        >
-          <SearchIcon />
-        </IconButton>
+        <div className="flex shrink-0 items-center gap-1">
+          {activeChat.type === 'group' ? (
+            <IconButton label="Участники базара" onClick={() => setIsParticipantsOpen(true)}>
+              <PeopleIcon />
+            </IconButton>
+          ) : null}
+          <IconButton
+            label="Поиск по сообщениям"
+            onClick={() => setIsSearchOpen((open) => !open)}
+          >
+            <SearchIcon />
+          </IconButton>
+        </div>
       </header>
 
       <MessageSearch
@@ -102,6 +112,11 @@ export function ChatArea() {
       <footer className="border-t border-border px-5 py-4">
         <MessageComposer onSubmit={sendMessage} disabled={!activeChatId} />
       </footer>
+
+      <ParticipantsPanel
+        chatId={isParticipantsOpen ? activeChat.id : null}
+        onClose={() => setIsParticipantsOpen(false)}
+      />
     </section>
   )
 }

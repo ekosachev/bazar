@@ -5,7 +5,6 @@ import { ProfileModal } from '@/features/auth/components/profile-modal'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { ChatListItem } from '@/features/chats/components/chat-list-item'
 import { CreateChatMenu } from '@/features/chats/components/create-chat-menu'
-import { ParticipantsPanel } from '@/features/chats/components/participants-panel'
 import { sortChatsByActivity } from '@/features/chats/lib/sort-chats'
 import { useChatsStore } from '@/features/chats/store/chats-store'
 
@@ -27,7 +26,6 @@ export function Sidebar() {
     return sortedChats.filter((chat) => chat.title.toLowerCase().includes(query))
   }, [chatSearchQuery, sortedChats])
 
-  const [participantsChatId, setParticipantsChatId] = useState<string | null>(null)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const user = useAuthStore((state) => state.user)
 
@@ -72,12 +70,9 @@ export function Sidebar() {
             chat={chat}
             active={chat.id === activeChatId}
             onSelect={setActiveChatId}
-            onOpenParticipants={setParticipantsChatId}
           />
         ))}
       </nav>
-
-      <ParticipantsPanel chatId={participantsChatId} onClose={() => setParticipantsChatId(null)} />
 
       {user ? (
         <footer className="border-t border-border px-4 py-3">

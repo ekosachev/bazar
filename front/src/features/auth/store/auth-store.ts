@@ -24,11 +24,14 @@ async function establishSession(
   tokens: AuthTokens,
 ) {
   setRefreshCookie(tokens.refreshToken, REFRESH_COOKIE_MAX_AGE)
+  // Set the token before fetching the profile — otherwise this first authenticated
+  // request goes out with no Authorization header and needlessly 401s.
+  set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken })
 
   const userId = getUserIdFromToken(tokens.accessToken)
   const user = userId ? await authApi.getUserById(userId) : null
 
-  set({ user, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken })
+  set({ user })
 }
 
 export const useAuthStore = create<AuthState>()(
