@@ -458,3 +458,29 @@ func (s *ChatService) CreateMessage(
 
 	return &message, nil
 }
+
+func (s *ChatService) UpdateMessage(
+	ctx context.Context,
+	userID uuid.UUID,
+	messageID uuid.UUID,
+	newContent string,
+) error {
+	messageToUpdate, err := s.messageService.GetMessageByID(ctx, messageID)
+	if err != nil {
+		return err
+	}
+
+	if messageToUpdate == nil {
+		return &message.ErrNotFound{ID: messageID}
+	}
+
+	if messageToUpdate.SenderID != userID {
+		return &ErrInsufficientPermissions{
+			UserID: userID,
+			ChatID: messageToUpdate.ChatModelID,
+			Action: "update other's messages",
+		}
+	}
+
+	return s.messageService.UpdateMessage(ctx, messageID, newContent)
+}

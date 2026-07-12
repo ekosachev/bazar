@@ -38,6 +38,7 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 			accessTokenGroup.GET("/:id/messages", h.findMessages)
 			accessTokenGroup.POST("/:id/messages", h.createMessage)
 			accessTokenGroup.GET("/:id/messages/search", h.findMessagesByContent)
+			accessTokenGroup.PUT("/:id/messages/:message_id", h.updateMessage)
 		}
 	}
 }
@@ -476,4 +477,45 @@ func (h *ChatHandler) createMessage(c *gin.Context) {
 		Success: true,
 		Data:    *result.IntoResponse(),
 	})
+}
+
+func (h *ChatHandler) updateMessage(c *gin.Context) {
+	messageID, err := uuid.Parse(c.Param("message_id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var req struct {
+		NewContent string `json:"content" binding:"required"`
+	}
+
+	if err = c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = h.service.UpdateMessage(c, userID, messageID, req.NewContent); err != nil {
+		var notFound *message.ErrNotFound
+		if errors.As(err, &notFound) {
+			utils.SendError(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		var insufficientPermissions *ErrInsufficientPermissions
+		if errors.As(err, &insufficientPermissions) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{Success: true})
 }
