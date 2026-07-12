@@ -21,3 +21,11 @@ func (s *MessageService) GetMessageByID(ctx context.Context, id uuid.UUID) (*Mes
 func (s *MessageService) FindMessages(ctx context.Context, chatID uuid.UUID, before uuid.UUID, limit int) ([]MessageDTO, error) {
 	return s.repo.FindMessages(ctx, chatID, before, limit)
 }
+
+func (s *MessageService) FindMessagesByContent(ctx context.Context, chatID uuid.UUID, query string) ([]MessageDTO, error) {
+	return s.repo.FindMessagesByContent(ctx, chatID, query)
+}
+
+func (s *MessageService) CreateMessage(ctx context.Context, message *MessageDTO) error {
+	return s.repo.CreateMessage(ctx, message)
+}
