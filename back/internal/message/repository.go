@@ -109,3 +109,13 @@ func (r *MessageRepository) CreateMessage(ctx context.Context, message *MessageD
 
 	return nil
 }
+
+func (r *MessageRepository) UpdateMessage(ctx context.Context, id uuid.UUID, newContent string) error {
+	_, err := gorm.G[MessageModel](r.db).Where("id = ?", id).Update(ctx, "content", newContent)
+	return err
+}
+
+func (r *MessageRepository) DeleteMessage(ctx context.Context, id uuid.UUID) error {
+	_, err := gorm.G[MessageModel](r.db).Where("id = ?", id).Delete(ctx)
+	return err
+}
