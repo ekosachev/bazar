@@ -13,6 +13,7 @@ export async function buildChatFromApi(
   const adminIds = members
     .filter((member) => member.role === 'owner' || member.role === 'admin')
     .map((member) => member.user_id)
+  const ownerId = members.find((member) => member.role === 'owner')?.user_id
 
   if (details.chat_type === 'direct') {
     const peer = members.find((member) => member.user_id !== currentUserId)
@@ -35,5 +36,6 @@ export async function buildChatFromApi(
     lastMessageAt: details.created_at,
     participantIds,
     adminIds,
+    ownerId,
   }
 }

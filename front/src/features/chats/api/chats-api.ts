@@ -69,3 +69,10 @@ export function removeChatMember(chatId: string, userId: string) {
 export function leaveChat(chatId: string) {
   return apiFetch<void>(`/chat/${chatId}/leave`, { method: 'DELETE' })
 }
+
+export function updateChat(chatId: string, payload: { title?: string; description?: string }) {
+  return apiFetch<ChatApiResponse>(`/chat/${chatId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}

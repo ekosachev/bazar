@@ -20,6 +20,8 @@ export interface Chat {
   participantIds?: string[]
   /** Group chat ("базар") admin user ids — only admins can add/remove participants. */
   adminIds?: string[]
+  /** Group/channel owner user id — only the owner can rename the chat or change roles. */
+  ownerId?: string
   /** Channel ("точка") description. */
   description?: string
   /** Direct chat ("1-на-1") counterpart user id. */

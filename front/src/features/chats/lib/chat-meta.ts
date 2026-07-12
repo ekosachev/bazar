@@ -17,6 +17,9 @@ function pluralizeParticipants(count: number) {
 
 export function getChatSubtitle(chat: Chat) {
   if (chat.type === 'group') {
+    if (chat.description?.trim()) {
+      return chat.description.trim()
+    }
     const count = chat.participantIds?.length ?? 0
     return count > 0 ? pluralizeParticipants(count) : 'Базар'
   }
