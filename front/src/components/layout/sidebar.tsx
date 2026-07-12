@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Input } from '@/components/ui'
+import { Avatar, Input } from '@/components/ui'
 import { Logo } from '@/components/layout/logo'
+import { ProfileModal } from '@/features/auth/components/profile-modal'
+import { useAuthStore } from '@/features/auth/store/auth-store'
 import { ChatListItem } from '@/features/chats/components/chat-list-item'
 import { CreateChatMenu } from '@/features/chats/components/create-chat-menu'
 import { ParticipantsPanel } from '@/features/chats/components/participants-panel'
@@ -26,6 +28,8 @@ export function Sidebar() {
   }, [chatSearchQuery, sortedChats])
 
   const [participantsChatId, setParticipantsChatId] = useState<string | null>(null)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const user = useAuthStore((state) => state.user)
 
   useEffect(() => {
     loadChats()
@@ -74,6 +78,21 @@ export function Sidebar() {
       </nav>
 
       <ParticipantsPanel chatId={participantsChatId} onClose={() => setParticipantsChatId(null)} />
+
+      {user ? (
+        <footer className="border-t border-border px-4 py-3">
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-hover/70"
+          >
+            <Avatar name={user.displayName} src={user.avatarUrl} size="sm" />
+            <span className="min-w-0 flex-1 truncate text-body text-content">{user.displayName}</span>
+          </button>
+        </footer>
+      ) : null}
+
+      <ProfileModal open={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
     </aside>
   )
 }

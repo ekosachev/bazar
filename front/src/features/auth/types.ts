@@ -14,3 +14,8 @@ export interface AuthTokens {
   accessToken: string
   refreshToken: string
 }
+
+export interface UpdateProfilePayload {
+  username?: string
+  displayName?: string
+}
