@@ -114,3 +114,8 @@ func (r *MessageRepository) UpdateMessage(ctx context.Context, id uuid.UUID, new
 	_, err := gorm.G[MessageModel](r.db).Where("id = ?", id).Update(ctx, "content", newContent)
 	return err
 }
+
+func (r *MessageRepository) DeleteMessage(ctx context.Context, id uuid.UUID) error {
+	_, err := gorm.G[MessageModel](r.db).Where("id = ?", id).Delete(ctx)
+	return err
+}

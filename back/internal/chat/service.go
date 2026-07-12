@@ -484,3 +484,34 @@ func (s *ChatService) UpdateMessage(
 
 	return s.messageService.UpdateMessage(ctx, messageID, newContent)
 }
+
+func (s *ChatService) DeleteMessage(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	messageID uuid.UUID,
+) error {
+	messageToDelete, err := s.messageService.GetMessageByID(ctx, messageID)
+	if err != nil {
+		return err
+	}
+
+	if messageToDelete == nil {
+		return &message.ErrNotFound{ID: messageID}
+	}
+
+	role, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return err
+	}
+
+	if messageToDelete.SenderID != userID || *role != RoleMember {
+		return &ErrInsufficientPermissions{
+			UserID: userID,
+			ChatID: messageToDelete.ChatModelID,
+			Action: "update other's messages",
+		}
+	}
+
+	return s.messageService.DeleteMessage(ctx, messageID)
+}

@@ -41,3 +41,15 @@ func (s *MessageService) UpdateMessage(ctx context.Context, id uuid.UUID, newCon
 
 	return s.repo.UpdateMessage(ctx, id, newContent)
 }
+
+func (s *MessageService) DeleteMessage(ctx context.Context, id uuid.UUID) error {
+	existingMessage, err := s.GetMessageByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if existingMessage == nil {
+		return &ErrNotFound{ID: id}
+	}
+
+	return s.repo.DeleteMessage(ctx, id)
+}
