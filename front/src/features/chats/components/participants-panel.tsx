@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Avatar, Button, IconButton, Input } from '@/components/ui'
 import * as authApi from '@/features/auth/api/auth-api'
-import { searchUsers } from '@/features/chats/api/users-api'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { Modal } from '@/features/chats/components/modal'
+import {
+  USER_SEARCH_MIN_LENGTH,
+  useUserSearch,
+} from '@/features/chats/hooks/use-user-search'
 import { useChatsStore } from '@/features/chats/store/chats-store'
 import type { User } from '@/types/chat'
 
@@ -11,8 +14,6 @@ export interface ParticipantsPanelProps {
   chatId: string | null
   onClose: () => void
 }
-
-const SEARCH_DEBOUNCE_MS = 300
 
 function RemoveIcon() {
   return (
@@ -61,15 +62,27 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
 
   const [isAddingOpen, setIsAddingOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<User[]>([])
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
 
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingUserId, setPendingUserId] = useState<string | null>(null)
 
   const participantIds = chat?.participantIds ?? []
   const participantIdsKey = participantIds.join(',')
+
+  const excludeUserIds = useMemo(
+    () => (currentUserId ? [...participantIds, currentUserId] : participantIds),
+    [currentUserId, participantIdsKey],
+  )
+
+  const {
+    users: searchResults,
+    isSearching,
+    error: searchError,
+  } = useUserSearch({
+    query: searchQuery,
+    enabled: isAddingOpen,
+    excludeUserIds,
+  })
 
   useEffect(() => {
     if (!chatId) {
@@ -113,59 +126,11 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
     return () => {
       cancelled = true
     }
-  }, [chatId, currentUser, participantIdsKey])
-
-  useEffect(() => {
-    if (!isAddingOpen) {
-      setSearchResults([])
-      setSearchError(null)
-      return
-    }
-
-    const trimmedQuery = searchQuery.trim()
-    if (trimmedQuery.length < 2) {
-      setSearchResults([])
-      setSearchError(null)
-      return
-    }
-
-    let cancelled = false
-    const timeoutId = window.setTimeout(() => {
-      void (async () => {
-        setIsSearching(true)
-        setSearchError(null)
-
-        try {
-          const users = await searchUsers(trimmedQuery)
-          if (!cancelled) {
-            setSearchResults(
-              users.filter(
-                (user) => user.id !== currentUserId && !participantIds.includes(user.id),
-              ),
-            )
-          }
-        } catch (error) {
-          if (!cancelled) {
-            setSearchError(error instanceof Error ? error.message : 'Не удалось найти пользователей')
-          }
-        } finally {
-          if (!cancelled) {
-            setIsSearching(false)
-          }
-        }
-      })()
-    }, SEARCH_DEBOUNCE_MS)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(timeoutId)
-    }
-  }, [currentUserId, isAddingOpen, participantIds, searchQuery])
+  }, [chatId, currentUser, participantIds, participantIdsKey])
 
   function handleClose() {
     setIsAddingOpen(false)
     setSearchQuery('')
-    setSearchResults([])
     setActionError(null)
     onClose()
   }
@@ -204,6 +169,8 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
       setPendingUserId(null)
     }
   }
+
+  const trimmedQuery = searchQuery.trim()
 
   return (
     <Modal
@@ -258,7 +225,7 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
                 <p className="text-body text-content-muted">Ищем…</p>
               ) : searchError ? (
                 <p className="text-body text-danger">{searchError}</p>
-              ) : searchQuery.trim().length < 2 ? (
+              ) : trimmedQuery.length < USER_SEARCH_MIN_LENGTH ? (
                 <p className="text-body text-content-muted">Введите минимум 2 символа</p>
               ) : searchResults.length === 0 ? (
                 <p className="text-body text-content-muted">Никого не нашли</p>
