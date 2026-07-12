@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Input } from '@/components/ui'
 import { Logo } from '@/components/layout/logo'
-import { LogoutButton } from '@/features/auth/components/logout-button'
 import { ChatListItem } from '@/features/chats/components/chat-list-item'
 import { CreateChatMenu } from '@/features/chats/components/create-chat-menu'
 import { ParticipantsPanel } from '@/features/chats/components/participants-panel'
@@ -26,8 +25,6 @@ export function Sidebar() {
     <aside className="flex h-full w-full max-w-sm flex-col border-r border-border bg-bg-elevated">
       <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-4">
         <Logo />
-        {/* TODO: временно для проверки логаута, убрать перед коммитом */}
-        <LogoutButton size="sm" />
         <CreateChatMenu />
       </header>
 

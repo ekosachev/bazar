@@ -1,57 +1,29 @@
 import { create } from 'zustand'
-import * as authApi from '@/features/auth/api/auth-api'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import * as chatsApi from '@/features/chats/api/chats-api'
-import type { Chat, ChatType } from '@/types/chat'
+import { buildChatFromApi } from '@/features/chats/lib/build-chat-from-api'
+import type { Chat } from '@/types/chat'
 
 interface ChatsState {
   chats: Chat[]
   activeChatId: string | undefined
   isLoadingChats: boolean
   loadChats: () => Promise<void>
+  refreshChat: (chatId: string) => Promise<void>
   setActiveChatId: (chatId: string) => void
   createGroupChat: (title: string, participantIds: string[]) => Promise<string>
   createChannelChat: (title: string, description: string) => Promise<string>
   openDirectChat: (userId: string, displayName: string) => Promise<string>
   isChatAdmin: (chatId: string, userId: string | undefined) => boolean
-  addParticipant: (chatId: string, userId: string) => void
-  removeParticipant: (chatId: string, userId: string) => void
+  addParticipant: (chatId: string, userId: string) => Promise<void>
+  removeParticipant: (chatId: string, userId: string) => Promise<void>
 }
 
 async function loadChatFromMembership(
   membership: chatsApi.ChatMemberApiResponse,
   currentUserId: string | undefined,
 ): Promise<Chat> {
-  const details = await chatsApi.getChatById(membership.chat_id)
-  const members = await chatsApi.getChatMembers(details.id)
-
-  const participantIds = members.map((member) => member.user_id)
-  const adminIds = members
-    .filter((member) => member.role === 'owner' || member.role === 'admin')
-    .map((member) => member.user_id)
-
-  if (details.chat_type === 'direct') {
-    const peer = members.find((member) => member.user_id !== currentUserId)
-    const peerUser = peer ? await authApi.getUserById(peer.user_id).catch(() => null) : null
-
-    return {
-      id: details.id,
-      type: 'direct',
-      title: peerUser?.displayName ?? 'Личный чат',
-      peerUserId: peer?.user_id,
-      lastMessageAt: details.created_at,
-    }
-  }
-
-  return {
-    id: details.id,
-    type: details.chat_type as ChatType,
-    title: details.title,
-    description: details.description || undefined,
-    lastMessageAt: details.created_at,
-    participantIds,
-    adminIds,
-  }
+  return buildChatFromApi(membership.chat_id, currentUserId)
 }
 
 export const useChatsStore = create<ChatsState>((set, get) => ({
@@ -73,6 +45,15 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
     } finally {
       set({ isLoadingChats: false })
     }
+  },
+
+  refreshChat: async (chatId) => {
+    const currentUserId = useAuthStore.getState().user?.id
+    const chat = await buildChatFromApi(chatId, currentUserId)
+
+    set((state) => ({
+      chats: state.chats.map((item) => (item.id === chatId ? chat : item)),
+    }))
   },
 
   setActiveChatId: (chatId) => set({ activeChatId: chatId }),
@@ -137,37 +118,27 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
     return Boolean(chat?.adminIds?.includes(userId))
   },
 
-  addParticipant: (chatId, userId) => {
-    set((state) => ({
-      chats: state.chats.map((chat) =>
-        chat.id === chatId && !chat.participantIds?.includes(userId)
-          ? { ...chat, participantIds: [...(chat.participantIds ?? []), userId] }
-          : chat,
-      ),
-    }))
+  addParticipant: async (chatId, userId) => {
+    await chatsApi.addChatMember(chatId, userId)
+    await get().refreshChat(chatId)
   },
 
-  removeParticipant: (chatId, userId) => {
+  removeParticipant: async (chatId, userId) => {
     const isSelfRemoval = useAuthStore.getState().user?.id === userId
 
-    set((state) => {
-      // Removing yourself means leaving the group — it should disappear from your chat list.
-      const chats = isSelfRemoval
-        ? state.chats.filter((chat) => chat.id !== chatId)
-        : state.chats.map((chat) =>
-            chat.id === chatId
-              ? {
-                  ...chat,
-                  participantIds: (chat.participantIds ?? []).filter((id) => id !== userId),
-                  adminIds: (chat.adminIds ?? []).filter((id) => id !== userId),
-                }
-              : chat,
-          )
+    if (isSelfRemoval) {
+      await chatsApi.leaveChat(chatId)
+      set((state) => {
+        const chats = state.chats.filter((chat) => chat.id !== chatId)
+        const activeChatId =
+          state.activeChatId === chatId ? chats[0]?.id : state.activeChatId
 
-      const activeChatId =
-        isSelfRemoval && state.activeChatId === chatId ? chats[0]?.id : state.activeChatId
+        return { chats, activeChatId }
+      })
+      return
+    }
 
-      return { chats, activeChatId }
-    })
+    await chatsApi.removeChatMember(chatId, userId)
+    await get().refreshChat(chatId)
   },
 }))
