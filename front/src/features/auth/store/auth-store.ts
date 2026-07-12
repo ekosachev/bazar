@@ -5,7 +5,7 @@ import * as authApi from '@/features/auth/api/auth-api'
 import { getUserIdFromToken } from '@/features/auth/lib/jwt'
 import { clearRefreshCookie, setRefreshCookie } from '@/features/auth/lib/refresh-cookie'
 import type { User } from '@/types/chat'
-import type { AuthTokens, LoginPayload, RegisterPayload } from '@/features/auth/types'
+import type { AuthTokens, LoginPayload, RegisterPayload, UpdateProfilePayload } from '@/features/auth/types'
 
 const REFRESH_COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
@@ -15,6 +15,7 @@ interface AuthState {
   refreshToken: string | null
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
+  updateProfile: (payload: UpdateProfilePayload) => Promise<void>
   logout: () => void
 }
 
@@ -46,6 +47,11 @@ export const useAuthStore = create<AuthState>()(
         await authApi.register(payload)
         const tokens = await authApi.login({ username: payload.username, password: payload.password })
         await establishSession(set, tokens)
+      },
+
+      updateProfile: async (payload) => {
+        const user = await authApi.updateProfile(payload)
+        set({ user })
       },
 
       logout: () => {

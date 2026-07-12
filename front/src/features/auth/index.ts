@@ -1,9 +1,10 @@
 // Auth screens, token storage, route guards — second frontend developer
 export { LoginForm } from './components/login-form'
 export { LogoutButton } from './components/logout-button'
+export { ProfileModal } from './components/profile-modal'
 export { RegisterForm } from './components/register-form'
 export { RequireAuth } from './components/require-auth'
 export { LoginPage } from './pages/login-page'
 export { RegisterPage } from './pages/register-page'
 export { useAuthStore } from './store/auth-store'
-export type { AuthTokens, LoginPayload, RegisterPayload } from './types'
+export type { AuthTokens, LoginPayload, RegisterPayload, UpdateProfilePayload } from './types'

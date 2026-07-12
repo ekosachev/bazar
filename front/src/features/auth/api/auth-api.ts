@@ -1,6 +1,6 @@
 import { apiFetch } from '@/lib/http-client'
 import type { User } from '@/types/chat'
-import type { AuthTokens, LoginPayload, RegisterPayload } from '@/features/auth/types'
+import type { AuthTokens, LoginPayload, RegisterPayload, UpdateProfilePayload } from '@/features/auth/types'
 
 interface UserApiResponse {
   id: string
@@ -71,5 +71,24 @@ export async function getMe() {
 
 export async function getUserById(userId: string): Promise<User> {
   const response = await apiFetch<UserApiResponse>(`/user/${userId}`, { method: 'GET' })
+  return toUser(response)
+}
+
+export async function updateProfile(payload: UpdateProfilePayload): Promise<User> {
+  const body: Record<string, string> = {}
+
+  if (payload.username !== undefined) {
+    body.username = payload.username
+  }
+
+  if (payload.displayName !== undefined) {
+    body.display_name = payload.displayName
+  }
+
+  const response = await apiFetch<UserApiResponse>('/user/update', {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  })
+
   return toUser(response)
 }
