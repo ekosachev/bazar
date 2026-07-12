@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuthStore } from '@/features/auth/store/auth-store'
-import { mockOlderMessages } from '@/features/chats/data/mock-chats'
 import { getChatMessages } from '@/features/messages/api/messages-api'
 import { useMessagesStore } from '@/features/messages/store/messages-store'
 
@@ -75,13 +74,6 @@ export function useMessagePagination(chatId: string | undefined) {
 
       setHasMore(more)
     } catch {
-      if (chatId === '1' && oldestMessage.id === 'm1') {
-        isRestoringScrollRef.current = true
-        prependWithScrollPreserved(container, () => prependMessages(chatId, mockOlderMessages), () => {
-          isRestoringScrollRef.current = false
-        })
-      }
-
       setHasMore(false)
     } finally {
       isLoadingRef.current = false

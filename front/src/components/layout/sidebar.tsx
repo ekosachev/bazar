@@ -14,6 +14,16 @@ export function Sidebar() {
   const isLoadingChats = useChatsStore((state) => state.isLoadingChats)
   const loadChats = useChatsStore((state) => state.loadChats)
   const sortedChats = useMemo(() => sortChatsByActivity(chats), [chats])
+  const [chatSearchQuery, setChatSearchQuery] = useState('')
+
+  const visibleChats = useMemo(() => {
+    const query = chatSearchQuery.trim().toLowerCase()
+    if (!query) {
+      return sortedChats
+    }
+
+    return sortedChats.filter((chat) => chat.title.toLowerCase().includes(query))
+  }, [chatSearchQuery, sortedChats])
 
   const [participantsChatId, setParticipantsChatId] = useState<string | null>(null)
 
@@ -29,21 +39,30 @@ export function Sidebar() {
       </header>
 
       <div className="px-4 py-3">
-        <Input placeholder="Поиск чатов" aria-label="Поиск чатов" />
+        <Input
+          placeholder="Поиск чатов"
+          aria-label="Поиск чатов"
+          value={chatSearchQuery}
+          onChange={(event) => setChatSearchQuery(event.target.value)}
+        />
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3" aria-label="Список чатов">
-        {isLoadingChats && sortedChats.length === 0 ? (
+        {isLoadingChats && visibleChats.length === 0 ? (
           <p className="px-3 py-2 text-body text-content-muted">Загрузка чатов…</p>
         ) : null}
 
-        {!isLoadingChats && sortedChats.length === 0 ? (
+        {!isLoadingChats && chats.length === 0 ? (
           <p className="px-3 py-2 text-body text-content-muted">
             Пока нет чатов — создайте базар, точку или напишите кому-нибудь
           </p>
         ) : null}
 
-        {sortedChats.map((chat) => (
+        {!isLoadingChats && chats.length > 0 && visibleChats.length === 0 ? (
+          <p className="px-3 py-2 text-body text-content-muted">Чаты не найдены</p>
+        ) : null}
+
+        {visibleChats.map((chat) => (
           <ChatListItem
             key={chat.id}
             chat={chat}

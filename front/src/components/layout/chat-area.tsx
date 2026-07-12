@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { IconButton, SearchIcon } from '@/components/ui'
 import { getChatSubtitle } from '@/features/chats/lib/chat-meta'
 import { useChatsStore } from '@/features/chats/store/chats-store'
-import { mockMessages } from '@/features/chats/data/mock-chats'
 import { ConnectionStatus } from '@/features/messages/components/connection-status'
 import { MessageComposer } from '@/features/messages/components/message-composer'
 import { MessageList } from '@/features/messages/components/message-list'
@@ -24,7 +23,6 @@ export function ChatArea() {
   )
 
   const setMessagesActiveChatId = useMessagesStore((state) => state.setActiveChatId)
-  const setMessages = useMessagesStore((state) => state.setMessages)
   const messages = useActiveChatMessages()
   const { sendMessage } = useSendMessage(activeChatId ?? '')
   useMessageEvents(activeChatId ?? '')
@@ -46,20 +44,7 @@ export function ChatArea() {
 
   useEffect(() => {
     setMessagesActiveChatId(activeChatId ?? null)
-
-    if (!activeChatId) {
-      return
-    }
-
-    const existingMessages = useMessagesStore.getState().getMessages(activeChatId)
-    if (existingMessages.length > 0) {
-      return
-    }
-
-    if (activeChatId === '1') {
-      setMessages(activeChatId, mockMessages)
-    }
-  }, [activeChatId, setMessages, setMessagesActiveChatId])
+  }, [activeChatId, setMessagesActiveChatId])
 
   if (!activeChat) {
     return (
