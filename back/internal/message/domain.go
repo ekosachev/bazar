@@ -1,6 +1,7 @@
 package message
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -68,4 +69,12 @@ func (mdto *MessageDTO) IntoResponse() *MessageResponse {
 		CreatedAt:   mdto.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:   mdto.UpdatedAt.Format(time.RFC3339),
 	}
+}
+
+type ErrNotFound struct {
+	ID uuid.UUID
+}
+
+func (e *ErrNotFound) Error() string {
+	return fmt.Sprintf("Message with id %s does not exist", e.ID)
 }

@@ -401,3 +401,60 @@ func (s *ChatService) FindMessages(
 
 	return &result, err
 }
+
+func (s *ChatService) FindMessagesByContent(
+	ctx context.Context,
+	chatID uuid.UUID,
+	userID uuid.UUID,
+	query string,
+) (*[]message.MessageDTO, error) {
+	_, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.messageService.FindMessagesByContent(ctx, chatID, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, err
+}
+
+func (s *ChatService) CreateMessage(
+	ctx context.Context,
+	chatID uuid.UUID,
+	userID uuid.UUID,
+	content string,
+	replyToID *uuid.UUID,
+) (*message.MessageDTO, error) {
+	_, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	if replyToID != nil {
+		replyTarget, err := s.messageService.GetMessageByID(ctx, *replyToID)
+		if err != nil {
+			return nil, err
+		}
+
+		if replyTarget == nil {
+			return nil, &message.ErrNotFound{ID: *replyToID}
+		}
+	}
+
+	message := message.MessageDTO{
+		ChatModelID: chatID,
+		SenderID:    userID,
+		Content:     content,
+		ReplyToID:   replyToID,
+	}
+
+	err = s.messageService.CreateMessage(ctx, &message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &message, nil
+}
