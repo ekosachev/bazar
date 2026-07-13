@@ -50,6 +50,7 @@ func main() {
 	chatHandler := chat.NewChatHandler(chatService)
 
 	hub := ws.NewHub(chatService)
+	go hub.Run()
 
 	group := r.Group("/api/v1")
 	{
