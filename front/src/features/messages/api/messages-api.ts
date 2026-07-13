@@ -59,7 +59,8 @@ export async function getChatMessages(
   )
 
   return {
-    messages: response.messages.map((message) => toMessage(message, currentUserId)),
+    // Backend returns newest-first; reverse to the chronological (oldest-first) order the store expects.
+    messages: response.messages.map((message) => toMessage(message, currentUserId)).reverse(),
     hasMore: response.has_more,
   }
 }

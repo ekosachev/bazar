@@ -25,17 +25,50 @@ function prependWithScrollPreserved(
 
 export function useMessagePagination(chatId: string | undefined) {
   const prependMessages = useMessagesStore((state) => state.prependMessages)
+  const setMessages = useMessagesStore((state) => state.setMessages)
   const currentUserId = useAuthStore((state) => state.user?.id)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const isLoadingRef = useRef(false)
   const isRestoringScrollRef = useRef(false)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false)
   const [hasMore, setHasMore] = useState(true)
 
   useEffect(() => {
     setHasMore(true)
-  }, [chatId])
+
+    if (!chatId || useMessagesStore.getState().getMessages(chatId).length > 0) {
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingInitial(true)
+
+    getChatMessages(chatId, { limit: PAGE_SIZE }, currentUserId)
+      .then(({ messages, hasMore: more }) => {
+        if (cancelled) {
+          return
+        }
+
+        setMessages(chatId, messages)
+        setHasMore(more)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHasMore(false)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingInitial(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [chatId, currentUserId, setMessages])
 
   const loadOlder = useCallback(async () => {
     if (!chatId || isLoadingRef.current || !hasMore) {
@@ -99,6 +132,7 @@ export function useMessagePagination(chatId: string | undefined) {
     containerRef,
     handleScroll,
     isLoadingMore,
+    isLoadingInitial,
     hasMore,
   }
 }
