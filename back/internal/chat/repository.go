@@ -193,3 +193,45 @@ func (r *ChatRepository) SetRole(
 		Update(ctx, "role", newRole)
 	return err
 }
+
+func (r *ChatRepository) MarkAsRead(
+	ctx context.Context,
+	chatID uuid.UUID,
+	userID uuid.UUID,
+	messageID uuid.UUID,
+) error {
+	_, err := gorm.G[ChatMemberModel](r.db).
+		Where("chat_model_id = ?", chatID).
+		Where("user_model_id = ?", userID).
+		Update(ctx, "last_read_message_id", &messageID)
+	return err
+}
+
+type ChatUnreadCount struct {
+	ChatModelID uuid.UUID `json:"chat_id"`
+	UnreadCount int64     `json:"unread_count"`
+}
+
+func (r *ChatRepository) GetUnreadCounts(ctx context.Context, userID uuid.UUID) ([]ChatUnreadCount, error) {
+	var result []ChatUnreadCount
+
+	err := r.db.WithContext(ctx).Raw(`
+  SELECT
+   cmm.chat_model_id AS chat_model_id,
+   COUNT(mm.id) AS unread_count
+  FROM chat_member_models cmm
+  JOIN message_models mm
+   ON mm.chat_model_id = cmm.chat_model_id
+   AND mm.sender_id != cmm.user_model_id
+   AND (
+    cmm.last_read_message_id IS NULL
+    OR mm.created_at > (
+     SELECT created_at FROM message_models WHERE id = cmm.last_read_message_id
+    )
+   )
+  WHERE cmm.user_model_id = ?
+  GROUP BY cmm.chat_model_id
+ `, userID).Scan(&result).Error
+
+	return result, err
+}
