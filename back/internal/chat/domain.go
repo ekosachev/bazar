@@ -41,9 +41,9 @@ type ChatMemberModel struct {
 	UserModelID uuid.UUID `gorm:"primaryKey"`
 
 	Role              ChatMemberRole
-	LastReadMessageID *uuid.UUID
+	LastReadMessageID *uuid.UUID `gorm:"type:uuid"`
 
-	InvitedBy uuid.UUID
+	InvitedBy uuid.UUID `gorm:"type:uuid"`
 	CreatedAt time.Time
 }
 

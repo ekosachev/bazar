@@ -10,7 +10,7 @@ import (
 type MessageModel struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 
-	ChatModelID uuid.UUID
+	ChatModelID uuid.UUID `gorm:"type:uuid"`
 	SenderID    uuid.UUID
 
 	Content   string
