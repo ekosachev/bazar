@@ -40,6 +40,8 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 			accessTokenGroup.GET("/:id/messages/search", h.findMessagesByContent)
 			accessTokenGroup.PUT("/:id/messages/:message_id", h.updateMessage)
 			accessTokenGroup.DELETE("/:id/messages/:message_id", h.deleteMessage)
+			accessTokenGroup.PUT("/:id/messages/read", h.markAsRead)
+			accessTokenGroup.GET("/unread_counts", h.getUnreadCounts)
 		}
 	}
 }
@@ -557,4 +559,58 @@ func (h *ChatHandler) deleteMessage(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, utils.APIResponse{Success: true})
+}
+
+func (h *ChatHandler) markAsRead(c *gin.Context) {
+	chatID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var req struct {
+		MessageID uuid.UUID `json:"message_id" binding:"required"`
+	}
+	if err = c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err = h.service.MarkAsRead(c, userID, chatID, req.MessageID); err != nil {
+		var notFound *message.ErrNotFound
+		if errors.As(err, &notFound) {
+			utils.SendError(c, http.StatusNotFound, err.Error())
+			return
+		}
+
+		var insufficientPermissions *ErrInsufficientPermissions
+		if errors.As(err, &insufficientPermissions) {
+			utils.SendError(c, http.StatusForbidden, err.Error())
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+}
+
+func (h *ChatHandler) getUnreadCounts(c *gin.Context) {
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	result, err := h.service.GetUnreadCounts(c, userID)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{Success: true, Data: result})
 }
