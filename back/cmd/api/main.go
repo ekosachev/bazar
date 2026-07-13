@@ -11,6 +11,7 @@ import (
 	"github.com/ekosachev/bazar/internal/message"
 	refreshtoken "github.com/ekosachev/bazar/internal/refresh_token"
 	"github.com/ekosachev/bazar/internal/user"
+	"github.com/ekosachev/bazar/internal/ws"
 	"github.com/gin-gonic/gin"
 )
 
@@ -48,12 +49,16 @@ func main() {
 	userHandler := user.NewUserHandler(userService)
 	chatHandler := chat.NewChatHandler(chatService)
 
+	hub := ws.NewHub(chatService)
+
 	group := r.Group("/api/v1")
 	{
 		authRouter.RegisterRoutes(group)
 		userHandler.RegisterRoutes(group)
 		chatHandler.RegisterRoutes(group)
 	}
+
+	r.GET("/ws", func(ctx *gin.Context) { ws.ServeWs(hub, authService, ctx) })
 
 	r.Run()
 }
