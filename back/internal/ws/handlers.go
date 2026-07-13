@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/ekosachev/bazar/internal/message"
 )
 
 type MessageHandler func(client *Client, payload json.RawMessage) error
@@ -22,41 +24,62 @@ func handleSendMessage(client *Client, payload json.RawMessage) error {
 	ctx, cancel := context.WithTimeout(client.ctx, 10*time.Second)
 	defer cancel()
 
-	newMessage, err := client.hub.chatService.CreateMessage(ctx, msg.ChatID, client.userID, msg.Content, msg.ReplyToID)
+	var newMessageDTO *message.MessageDTO
+
+	setNewMessage := func(msg *message.MessageDTO) {
+		newMessageDTO = msg
+	}
+
+	ackBytes, isDuplicate, err := client.hub.dedupCache.CheckOrStore(
+		client.userID,
+		msg.ClientMessageID,
+		func() ([]byte, error) {
+			newMessage, err := client.hub.chatService.CreateMessage(ctx, msg.ChatID, client.userID, msg.Content, msg.ReplyToID)
+			setNewMessage(newMessage)
+			if err != nil {
+				return []byte{}, err
+			}
+
+			ackMessage := OutgoingMessage{
+				Type: MessageSent,
+				Payload: MessageSentPayload{
+					Message:         *newMessage.IntoResponse(),
+					ClientMessageID: msg.ClientMessageID,
+				},
+			}
+
+			ackMessageBytes, _ := json.Marshal(ackMessage)
+			return ackMessageBytes, nil
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	ackMessage := OutgoingMessage{
-		Type: MessageSent,
-		Payload: MessageSentPayload{
-			Message:         *newMessage.IntoResponse(),
-			ClientMessageID: msg.ClientMessageID,
-		},
-	}
+	client.hub.SendToUser(client.userID, ackBytes)
 
-	ackMessageBytes, _ := json.Marshal(ackMessage)
-	client.hub.SendToUser(client.userID, ackMessageBytes)
+	if !isDuplicate {
 
-	chatMembers, err := client.hub.chatService.GetChatMembers(ctx, client.userID, msg.ChatID)
-	if err != nil {
-		return err
-	}
-
-	notification := OutgoingMessage{
-		Type: NewMessage,
-		Payload: NewMessagePayload{
-			Message: *newMessage.IntoResponse(),
-		},
-	}
-
-	notificationBytes, _ := json.Marshal(notification)
-
-	for _, member := range chatMembers {
-		if member.UserModelID == client.userID {
-			continue
+		chatMembers, err := client.hub.chatService.GetChatMembers(ctx, client.userID, msg.ChatID)
+		if err != nil {
+			return err
 		}
-		client.hub.SendToUser(member.UserModelID, notificationBytes)
+
+		notification := OutgoingMessage{
+			Type: NewMessage,
+			Payload: NewMessagePayload{
+				Message: *newMessageDTO.IntoResponse(),
+			},
+		}
+
+		notificationBytes, _ := json.Marshal(notification)
+
+		for _, member := range chatMembers {
+			if member.UserModelID == client.userID {
+				continue
+			}
+			client.hub.SendToUser(member.UserModelID, notificationBytes)
+		}
 	}
 
 	return nil

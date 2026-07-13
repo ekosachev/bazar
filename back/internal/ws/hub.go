@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"time"
+
 	"github.com/ekosachev/bazar/internal/chat"
 	"github.com/google/uuid"
 )
@@ -10,6 +12,7 @@ type Hub struct {
 	register    chan *Client
 	unregister  chan *Client
 	chatService *chat.ChatService
+	dedupCache  *DedupCache
 }
 
 func NewHub(chatService *chat.ChatService) *Hub {
@@ -18,6 +21,7 @@ func NewHub(chatService *chat.ChatService) *Hub {
 		register:    make(chan *Client),
 		unregister:  make(chan *Client),
 		chatService: chatService,
+		dedupCache:  NewDedupCache(1 * time.Minute),
 	}
 }
 
