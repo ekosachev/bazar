@@ -366,7 +366,7 @@ func (h *ChatHandler) findMessages(c *gin.Context) {
 	}
 
 	var req FindMessagesRequest
-	if err = c.ShouldBindJSON(&req); err != nil {
+	if err = c.ShouldBindQuery(&req); err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
 	}

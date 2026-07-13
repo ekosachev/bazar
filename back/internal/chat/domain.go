@@ -123,8 +123,8 @@ type SetRoleRequest struct {
 }
 
 type FindMessagesRequest struct {
-	Before uuid.UUID `form:"before" binding:"required"`
-	Limit  int       `form:"limit" binding:"required"`
+	Before *uuid.UUID `form:"before"`
+	Limit  int        `form:"limit" binding:"required"`
 }
 
 type FindMessagesByContentRequest struct {

@@ -393,7 +393,7 @@ func (s *ChatService) FindMessages(
 	ctx context.Context,
 	chatID uuid.UUID,
 	userID uuid.UUID,
-	before uuid.UUID,
+	before *uuid.UUID,
 	limit int,
 ) (*[]message.MessageDTO, error) {
 	_, err := s.GetUserRoleForChat(ctx, userID, chatID)
