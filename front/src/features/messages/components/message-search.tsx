@@ -1,4 +1,5 @@
 import { Button, Input } from '@/components/ui'
+import { formatMessageTime } from '@/features/messages/lib/format-message-time'
 import { cn } from '@/lib/cn'
 import type { Message } from '@/types/chat'
 
@@ -75,7 +76,7 @@ export function MessageSearch({
                       {truncatePreview(message.content)}
                     </span>
                     <span className="mt-0.5 block text-caption text-content-faint">
-                      {message.createdAt}
+                      {formatMessageTime(message.createdAt)}
                     </span>
                   </button>
                 </li>

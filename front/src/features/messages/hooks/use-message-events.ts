@@ -4,21 +4,13 @@ import { useSocket } from '@/features/messages/hooks/use-socket'
 import { useMessagesStore } from '@/features/messages/store/messages-store'
 
 export function useMessageEvents(chatId: string) {
-  const { subscribe, send, status } = useSocket()
+  const { subscribe } = useSocket()
   const addMessage = useMessagesStore((state) => state.addMessage)
   const replaceMessage = useMessagesStore((state) => state.replaceMessage)
   const userId = useAuthStore((state) => state.user?.id)
 
   useEffect(() => {
-    if (!chatId || status !== 'connected') {
-      return
-    }
-
-    send({ type: 'subscribe', payload: { chatIds: [chatId] } })
-  }, [chatId, send, status])
-
-  useEffect(() => {
-    if (!chatId || status !== 'connected') {
+    if (!chatId) {
       return
     }
 
@@ -50,5 +42,5 @@ export function useMessageEvents(chatId: string) {
         })
       }
     })
-  }, [addMessage, chatId, replaceMessage, status, subscribe, userId])
+  }, [addMessage, chatId, replaceMessage, subscribe, userId])
 }

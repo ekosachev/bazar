@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { resolveSenderName } from '@/features/messages/lib/resolve-sender'
 import type { Message } from '@/types/chat'
 
 interface MessagesState {
@@ -27,21 +28,54 @@ function mergeMessages(existing: Message[], incoming: Message[], position: 'star
     : [...existing, ...uniqueIncoming]
 }
 
+function patchMessage(chatId: string, messageId: string, patch: Partial<Message>) {
+  useMessagesStore.setState((state) => {
+    const current = state.messagesByChatId[chatId]
+    if (!current) {
+      return state
+    }
+
+    return {
+      messagesByChatId: {
+        ...state.messagesByChatId,
+        [chatId]: current.map((item) => (item.id === messageId ? { ...item, ...patch } : item)),
+      },
+    }
+  })
+}
+
+/** Messages only carry a senderId — fetch and cache the display name once resolved. */
+function enrichSenderNames(chatId: string, messages: Message[]) {
+  for (const message of messages) {
+    if (message.isOwn || message.senderName) {
+      continue
+    }
+
+    void resolveSenderName(message.senderId).then((senderName) => {
+      if (senderName) {
+        patchMessage(chatId, message.id, { senderName })
+      }
+    })
+  }
+}
+
 export const useMessagesStore = create<MessagesState>((set, get) => ({
   activeChatId: null,
   messagesByChatId: {},
 
   setActiveChatId: (chatId) => set({ activeChatId: chatId }),
 
-  setMessages: (chatId, messages) =>
+  setMessages: (chatId, messages) => {
     set((state) => ({
       messagesByChatId: {
         ...state.messagesByChatId,
         [chatId]: messages,
       },
-    })),
+    }))
+    enrichSenderNames(chatId, messages)
+  },
 
-  addMessage: (message) =>
+  addMessage: (message) => {
     set((state) => {
       const current = state.messagesByChatId[message.chatId] ?? []
 
@@ -51,9 +85,11 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
           [message.chatId]: mergeMessages(current, [message], 'end'),
         },
       }
-    }),
+    })
+    enrichSenderNames(message.chatId, [message])
+  },
 
-  replaceMessage: (chatId, messageId, message) =>
+  replaceMessage: (chatId, messageId, message) => {
     set((state) => {
       const current = state.messagesByChatId[chatId] ?? []
       const hasMessage = current.some((item) => item.id === messageId)
@@ -66,9 +102,11 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
             : mergeMessages(current, [message], 'end'),
         },
       }
-    }),
+    })
+    enrichSenderNames(chatId, [message])
+  },
 
-  prependMessages: (chatId, messages) =>
+  prependMessages: (chatId, messages) => {
     set((state) => {
       const current = state.messagesByChatId[chatId] ?? []
 
@@ -78,7 +116,9 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
           [chatId]: mergeMessages(current, messages, 'start'),
         },
       }
-    }),
+    })
+    enrichSenderNames(chatId, messages)
+  },
 
   getMessages: (chatId) => get().messagesByChatId[chatId] ?? [],
 

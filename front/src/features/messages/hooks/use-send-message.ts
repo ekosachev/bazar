@@ -4,13 +4,6 @@ import { useSocket } from '@/features/messages/hooks/use-socket'
 import { useMessagesStore } from '@/features/messages/store/messages-store'
 import type { Message } from '@/types/chat'
 
-function formatMessageTime(date: Date) {
-  return date.toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
 function createOptimisticMessage(
   chatId: string,
   content: string,
@@ -22,7 +15,7 @@ function createOptimisticMessage(
     chatId,
     senderId,
     content,
-    createdAt: formatMessageTime(new Date()),
+    createdAt: new Date().toISOString(),
     isOwn: true,
   }
 }
@@ -48,7 +41,7 @@ export function useSendMessage(chatId: string) {
 
       addMessage(optimisticMessage)
       send({
-        type: 'send_message',
+        type: 'message:send',
         payload: {
           chatId,
           content,

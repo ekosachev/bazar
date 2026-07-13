@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn'
+import { formatMessageTime } from '@/features/messages/lib/format-message-time'
 import { highlightQuery } from '@/features/messages/lib/highlight-query'
 import type { Message } from '@/types/chat'
 
@@ -61,7 +62,7 @@ export function MessageBubble({
             isOwn ? 'text-content/70' : 'text-content-faint',
           )}
         >
-          {message.createdAt}
+          {formatMessageTime(message.createdAt)}
         </p>
       </div>
     </div>

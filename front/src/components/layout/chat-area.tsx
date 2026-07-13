@@ -28,7 +28,8 @@ export function ChatArea() {
   const messages = useActiveChatMessages()
   const { sendMessage } = useSendMessage(activeChatId ?? '')
   useMessageEvents(activeChatId ?? '')
-  const { containerRef, handleScroll, isLoadingMore } = useMessagePagination(activeChatId)
+  const { containerRef, handleScroll, isLoadingMore, isLoadingInitial } =
+    useMessagePagination(activeChatId)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false)
@@ -106,7 +107,13 @@ export function ChatArea() {
         isLoadingMore={isLoadingMore}
         highlightQuery={trimmedSearchQuery || undefined}
         activeMatchId={activeMatchId}
-        emptyText={trimmedSearchQuery ? 'Ничего не найдено' : 'Сообщений пока нет'}
+        emptyText={
+          isLoadingInitial
+            ? 'Загрузка…'
+            : trimmedSearchQuery
+              ? 'Ничего не найдено'
+              : 'Сообщений пока нет'
+        }
       />
 
       <footer className="border-t border-border px-5 py-4">

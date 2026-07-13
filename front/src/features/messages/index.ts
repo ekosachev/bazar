@@ -3,16 +3,11 @@ export type {
   WsClientEventType,
   WsConnectionStatus,
   WsEvent,
-  WsMessageAckPayload,
-  WsMessageErrorPayload,
   WsMessageNewPayload,
   WsMessageSentPayload,
   WsSendMessagePayload,
   WsServerEvent,
   WsServerEventType,
-  WsSubscribePayload,
-  WsSubscribedPayload,
-  WsUnsubscribePayload,
 } from './types/ws-events'
 
 export { getChatMessages } from './api/messages-api'

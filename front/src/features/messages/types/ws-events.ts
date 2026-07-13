@@ -1,29 +1,15 @@
 import type { Message } from '@/types/chat'
 
-/** События, которые клиент отправляет на сервер */
-export type WsClientEventType = 'subscribe' | 'unsubscribe' | 'send_message' | 'ping'
+/** Событие, которое клиент отправляет на сервер — реальный бэкенд поддерживает только его. */
+export type WsClientEventType = 'message:send'
 
-/** События, которые сервер присылает клиенту */
-export type WsServerEventType =
-  | 'connected'
-  | 'subscribed'
-  | 'message:new'
-  | 'message:sent'
-  | 'message:ack'
-  | 'message:error'
-  | 'pong'
-
-export interface WsSubscribePayload {
-  chatIds: string[]
-}
-
-export interface WsUnsubscribePayload {
-  chatIds: string[]
-}
+/** События, которые сервер присылает клиенту. */
+export type WsServerEventType = 'message:new' | 'message:sent' | 'error'
 
 export interface WsSendMessagePayload {
   chatId: string
   content: string
+  replyToId?: string
   /** Клиентский id для дедупликации и идемпотентности */
   clientMessageId: string
 }
@@ -37,35 +23,12 @@ export interface WsMessageSentPayload {
   message: Message
 }
 
-export interface WsMessageAckPayload {
-  messageId: string
-  clientMessageId?: string
-}
-
-export interface WsMessageErrorPayload {
-  clientMessageId?: string
-  code: string
-  message: string
-}
-
-export interface WsSubscribedPayload {
-  chatIds: string[]
-}
-
-export type WsClientEvent =
-  | { type: 'subscribe'; payload: WsSubscribePayload }
-  | { type: 'unsubscribe'; payload: WsUnsubscribePayload }
-  | { type: 'send_message'; payload: WsSendMessagePayload }
-  | { type: 'ping' }
+export type WsClientEvent = { type: 'message:send'; payload: WsSendMessagePayload }
 
 export type WsServerEvent =
-  | { type: 'connected' }
-  | { type: 'subscribed'; payload: WsSubscribedPayload }
   | { type: 'message:new'; payload: WsMessageNewPayload }
   | { type: 'message:sent'; payload: WsMessageSentPayload }
-  | { type: 'message:ack'; payload: WsMessageAckPayload }
-  | { type: 'message:error'; payload: WsMessageErrorPayload }
-  | { type: 'pong' }
+  | { type: 'error'; code: string; description: string }
 
 export type WsEvent = WsClientEvent | WsServerEvent
 
