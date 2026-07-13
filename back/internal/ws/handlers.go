@@ -53,6 +53,9 @@ func handleSendMessage(client *Client, payload json.RawMessage) error {
 	notificationBytes, _ := json.Marshal(notification)
 
 	for _, member := range chatMembers {
+		if member.UserModelID == client.userID {
+			continue
+		}
 		client.hub.SendToUser(member.UserModelID, notificationBytes)
 	}
 
