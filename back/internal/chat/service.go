@@ -549,3 +549,7 @@ func (s *ChatService) MarkAsRead(
 
 	return s.repo.MarkAsRead(ctx, chatID, userID, messageID)
 }
+
+func (s *ChatService) GetUnreadCounts(ctx context.Context, userID uuid.UUID) ([]ChatUnreadCount, error) {
+	return s.repo.GetUnreadCounts(ctx, userID)
+}

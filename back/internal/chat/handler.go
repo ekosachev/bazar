@@ -41,6 +41,7 @@ func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
 			accessTokenGroup.PUT("/:id/messages/:message_id", h.updateMessage)
 			accessTokenGroup.DELETE("/:id/messages/:message_id", h.deleteMessage)
 			accessTokenGroup.PUT("/:id/messages/read", h.markAsRead)
+			accessTokenGroup.GET("/unread_counts", h.getUnreadCounts)
 		}
 	}
 }
@@ -596,4 +597,20 @@ func (h *ChatHandler) markAsRead(c *gin.Context) {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+}
+
+func (h *ChatHandler) getUnreadCounts(c *gin.Context) {
+	userID, err := uuid.Parse(c.GetString("userID"))
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	result, err := h.service.GetUnreadCounts(c, userID)
+	if err != nil {
+		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{Success: true, Data: result})
 }
