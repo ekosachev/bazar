@@ -522,3 +522,30 @@ func (s *ChatService) DeleteMessage(
 
 	return s.messageService.DeleteMessage(ctx, messageID)
 }
+
+func (s *ChatService) MarkAsRead(
+	ctx context.Context,
+	userID uuid.UUID,
+	chatID uuid.UUID,
+	messageID uuid.UUID,
+) error {
+	_, err := s.GetUserRoleForChat(ctx, userID, chatID)
+	if err != nil {
+		return err
+	}
+
+	msg, err := s.messageService.GetMessageByID(ctx, messageID)
+	if err != nil {
+		return err
+	}
+
+	if msg == nil {
+		return &message.ErrNotFound{ID: messageID}
+	}
+
+	if msg.ChatModelID != chatID {
+		return &ErrInsufficientPermissions{UserID: userID, ChatID: chatID, Action: "read message in another chat"}
+	}
+
+	return s.repo.MarkAsRead(ctx, chatID, userID, messageID)
+}

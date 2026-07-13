@@ -193,3 +193,16 @@ func (r *ChatRepository) SetRole(
 		Update(ctx, "role", newRole)
 	return err
 }
+
+func (r *ChatRepository) MarkAsRead(
+	ctx context.Context,
+	chatID uuid.UUID,
+	userID uuid.UUID,
+	messageID uuid.UUID,
+) error {
+	_, err := gorm.G[ChatMemberModel](r.db).
+		Where("chat_model_id = ?", chatID).
+		Where("user_model_id = ?", userID).
+		Update(ctx, "last_read_message_id", &messageID)
+	return err
+}
