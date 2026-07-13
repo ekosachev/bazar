@@ -64,7 +64,7 @@ func (dc *DedupCache) CheckOrStore(
 
 	resp, err := businessLogic()
 	if err != nil {
-		dc.mu.Unlock()
+		dc.mu.Lock()
 		delete(dc.items, key)
 		dc.mu.Unlock()
 		return nil, false, err
