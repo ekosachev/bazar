@@ -32,23 +32,29 @@ func (r *MessageRepository) GetByID(ctx context.Context, id uuid.UUID) (*Message
 func (r *MessageRepository) FindMessages(
 	ctx context.Context,
 	chatID uuid.UUID,
-	before uuid.UUID,
+	before *uuid.UUID,
 	limit int,
 ) ([]MessageDTO, error) {
 	var result []MessageDTO
 
-	beforeMessage, err := r.GetByID(ctx, before)
-	if err != nil {
-		return result, err
+	query := gorm.G[MessageModel](r.db).
+		Where("chat_model_id = ?", chatID)
+
+	if before != nil {
+		beforeMessage, err := r.GetByID(ctx, *before)
+		if err != nil {
+			return result, err
+		}
+
+		if beforeMessage == nil {
+			return result, nil
+		}
+
+		query = query.Where("created_at < ?", beforeMessage.CreatedAt)
 	}
 
-	if beforeMessage == nil {
-		return result, nil
-	}
-
-	messages, err := gorm.G[MessageModel](r.db).
-		Where("chat_model_id = ?", chatID).
-		Where("created_at < ?", beforeMessage.CreatedAt).
+	messages, err := query.
+		Order("created_at desc").
 		Limit(limit).
 		Find(ctx)
 	if err != nil {
