@@ -8,6 +8,7 @@ import { ConnectionStatus } from '@/features/messages/components/connection-stat
 import { MessageComposer } from '@/features/messages/components/message-composer'
 import { MessageList } from '@/features/messages/components/message-list'
 import { MessageSearch } from '@/features/messages/components/message-search'
+import { useMarkAsRead } from '@/features/messages/hooks/use-mark-as-read'
 import { useMessageEvents } from '@/features/messages/hooks/use-message-events'
 import { useMessagePagination } from '@/features/messages/hooks/use-message-pagination'
 import { useMessageSearch } from '@/features/messages/hooks/use-message-search'
@@ -28,6 +29,7 @@ export function ChatArea() {
   const messages = useActiveChatMessages()
   const { sendMessage } = useSendMessage(activeChatId ?? '')
   useMessageEvents(activeChatId ?? '')
+  useMarkAsRead(activeChatId, messages)
   const { containerRef, handleScroll, isLoadingMore, isLoadingInitial } =
     useMessagePagination(activeChatId)
   const [isSearchOpen, setIsSearchOpen] = useState(false)

@@ -83,3 +83,22 @@ export function setChatMemberRole(chatId: string, userId: string, newRole: 'admi
     body: JSON.stringify({ user_id: userId, new_role: newRole }),
   })
 }
+
+export interface UnreadCountApiResponse {
+  chat_id: string
+  unread_count: number
+}
+
+export async function getUnreadCounts() {
+  const result = await apiFetch<UnreadCountApiResponse[] | null>('/chat/unread_counts', {
+    method: 'GET',
+  })
+  return result ?? []
+}
+
+export function markChatAsRead(chatId: string, messageId: string) {
+  return apiFetch<void>(`/chat/${chatId}/messages/read`, {
+    method: 'PUT',
+    body: JSON.stringify({ message_id: messageId }),
+  })
+}

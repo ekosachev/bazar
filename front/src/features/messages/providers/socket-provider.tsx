@@ -64,7 +64,11 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
 
     return client.onMessage(listener)
-  }, [accessToken])
+    // Re-create when `status` changes so consumers that never change their own
+    // deps (e.g. a global tracker mounted once) still re-subscribe once the
+    // client actually connects, instead of forever holding a stale no-op.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, status])
 
   const value = useMemo(
     () => ({
