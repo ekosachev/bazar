@@ -14,9 +14,11 @@ interface MessageApiResponse {
   sender_name?: string | null
   content: string
   created_at: string
+  updated_at?: string
+  reply_to_id?: string | null
 }
 
-function toMessage(response: MessageApiResponse, currentUserId?: string): Message {
+export function toMessage(response: MessageApiResponse, currentUserId?: string): Message {
   return {
     id: response.id,
     chatId: response.chat_id,
@@ -24,6 +26,8 @@ function toMessage(response: MessageApiResponse, currentUserId?: string): Messag
     senderName: response.sender_name ?? undefined,
     content: response.content,
     createdAt: response.created_at,
+    updatedAt: response.updated_at,
+    replyToId: response.reply_to_id ?? undefined,
     isOwn: currentUserId ? response.sender_id === currentUserId : undefined,
   }
 }
@@ -62,4 +66,31 @@ export async function getChatMessages(
     messages: rawMessages.map((message) => toMessage(message, currentUserId)).reverse(),
     hasMore: rawMessages.length >= limit && rawMessages.length > 0,
   }
+}
+
+export async function searchChatMessages(
+  chatId: string,
+  query: string,
+  currentUserId?: string,
+): Promise<Message[]> {
+  const params = new URLSearchParams({ query })
+  const response = await apiFetch<MessageApiResponse[] | null>(
+    `/chat/${chatId}/messages/search?${params}`,
+    { method: 'GET' },
+  )
+
+  return (response ?? []).map((message) => toMessage(message, currentUserId))
+}
+
+export function updateChatMessage(chatId: string, messageId: string, content: string) {
+  return apiFetch<void>(`/chat/${chatId}/messages/${messageId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  })
+}
+
+export function deleteChatMessage(chatId: string, messageId: string) {
+  return apiFetch<void>(`/chat/${chatId}/messages/${messageId}`, {
+    method: 'DELETE',
+  })
 }

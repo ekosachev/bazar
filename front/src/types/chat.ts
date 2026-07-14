@@ -35,5 +35,8 @@ export interface Message {
   senderName?: string
   content: string
   createdAt: string
+  /** Present when the backend returns it; use to show an "edited" marker. */
+  updatedAt?: string
+  replyToId?: string
   isOwn?: boolean
 }
