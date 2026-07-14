@@ -39,4 +39,6 @@ export interface Message {
   updatedAt?: string
   replyToId?: string
   isOwn?: boolean
+  /** Direct-chat delivery status for own messages until the peer replies. */
+  status?: 'sent' | 'read'
 }

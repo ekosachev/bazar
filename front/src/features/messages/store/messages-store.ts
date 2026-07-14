@@ -14,6 +14,8 @@ interface MessagesState {
   removeMessage: (chatId: string, messageId: string) => void
   upsertMessage: (message: Message) => void
   prependMessages: (chatId: string, messages: Message[]) => void
+  markOwnMessagesReadUpTo: (chatId: string, messageId: string) => void
+  clearDeliveryStatuses: (chatId: string) => void
   getMessages: (chatId: string) => Message[]
   clearChat: (chatId: string) => void
 }
@@ -181,6 +183,57 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
       }
     })
     enrichSenderNames(chatId, messages)
+  },
+
+  markOwnMessagesReadUpTo: (chatId, messageId) => {
+    set((state) => {
+      const current = state.messagesByChatId[chatId]
+      if (!current) {
+        return state
+      }
+
+      const target = current.find((item) => item.id === messageId)
+      const targetTime = target ? new Date(target.createdAt).getTime() : null
+
+      return {
+        messagesByChatId: {
+          ...state.messagesByChatId,
+          [chatId]: current.map((item) => {
+            if (!item.isOwn || !item.status) {
+              return item
+            }
+
+            if (item.id === messageId) {
+              return { ...item, status: 'read' }
+            }
+
+            if (targetTime !== null && new Date(item.createdAt).getTime() <= targetTime) {
+              return { ...item, status: 'read' }
+            }
+
+            return item
+          }),
+        },
+      }
+    })
+  },
+
+  clearDeliveryStatuses: (chatId) => {
+    set((state) => {
+      const current = state.messagesByChatId[chatId]
+      if (!current) {
+        return state
+      }
+
+      return {
+        messagesByChatId: {
+          ...state.messagesByChatId,
+          [chatId]: current.map((item) =>
+            item.status ? { ...item, status: undefined } : item,
+          ),
+        },
+      }
+    })
   },
 
   getMessages: (chatId) => get().messagesByChatId[chatId] ?? [],

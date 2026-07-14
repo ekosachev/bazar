@@ -37,6 +37,9 @@ interface WireServerEvent {
   payload?: {
     message?: WireMessage
     client_message_id?: string
+    chat_id?: string
+    user_id?: string
+    message_id?: string
   }
 }
 
@@ -74,6 +77,22 @@ function parseServerEvent(raw: WireServerEvent): WsServerEvent | null {
       payload: {
         clientMessageId: raw.payload.client_message_id,
         message: fromWireMessage(raw.payload.message),
+      },
+    }
+  }
+
+  if (
+    raw.type === 'message:read' &&
+    raw.payload?.chat_id &&
+    raw.payload?.user_id &&
+    raw.payload?.message_id
+  ) {
+    return {
+      type: 'message:read',
+      payload: {
+        chatId: raw.payload.chat_id,
+        userId: raw.payload.user_id,
+        messageId: raw.payload.message_id,
       },
     }
   }

@@ -34,7 +34,9 @@ export function ChatArea() {
     pendingMessageId,
     error: actionError,
   } = useMessageActions(activeChatId ?? '')
-  useMessageEvents(activeChatId ?? '')
+  useMessageEvents(activeChatId ?? '', {
+    trackDeliveryStatus: activeChat?.type === 'direct',
+  })
   useMarkAsRead(activeChatId, messages)
   const { containerRef, handleScroll, isLoadingMore, isLoadingInitial } =
     useMessagePagination(activeChatId)
