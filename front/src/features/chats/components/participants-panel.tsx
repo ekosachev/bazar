@@ -308,7 +308,11 @@ export function ParticipantsPanel({ chatId, onClose }: ParticipantsPanelProps) {
               <span className="min-w-0 flex-1 truncate text-body text-content">
                 {user.displayName}
               </span>
-              {chat?.adminIds?.includes(user.id) ? <Badge variant="neutral">Админ</Badge> : null}
+              {user.id === chat?.ownerId ? (
+                <Badge variant="neutral">Создатель</Badge>
+              ) : chat?.adminIds?.includes(user.id) ? (
+                <Badge variant="neutral">Админ</Badge>
+              ) : null}
               {isOwner && user.id !== chat?.ownerId && user.id !== currentUserId ? (
                 <Button
                   variant="secondary"
