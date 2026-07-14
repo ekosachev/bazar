@@ -4,6 +4,7 @@ export type {
   WsConnectionStatus,
   WsEvent,
   WsMessageNewPayload,
+  WsMessageReadPayload,
   WsMessageSentPayload,
   WsSendMessagePayload,
   WsServerEvent,
