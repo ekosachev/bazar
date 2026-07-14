@@ -10,6 +10,9 @@ interface MessagesState {
   setMessages: (chatId: string, messages: Message[]) => void
   addMessage: (message: Message) => void
   replaceMessage: (chatId: string, messageId: string, message: Message) => void
+  updateMessage: (chatId: string, messageId: string, patch: Partial<Message>) => void
+  removeMessage: (chatId: string, messageId: string) => void
+  upsertMessage: (message: Message) => void
   prependMessages: (chatId: string, messages: Message[]) => void
   getMessages: (chatId: string) => Message[]
   clearChat: (chatId: string) => void
@@ -26,6 +29,18 @@ function mergeMessages(existing: Message[], incoming: Message[], position: 'star
   return position === 'start'
     ? [...uniqueIncoming, ...existing]
     : [...existing, ...uniqueIncoming]
+}
+
+function upsertByCreatedAt(existing: Message[], incoming: Message) {
+  if (existing.some((message) => message.id === incoming.id)) {
+    return existing.map((message) => (message.id === incoming.id ? incoming : message))
+  }
+
+  const next = [...existing, incoming]
+  next.sort(
+    (left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+  )
+  return next
 }
 
 function patchMessage(chatId: string, messageId: string, patch: Partial<Message>) {
@@ -104,6 +119,54 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
       }
     })
     enrichSenderNames(chatId, [message])
+  },
+
+  updateMessage: (chatId, messageId, patch) => {
+    set((state) => {
+      const current = state.messagesByChatId[chatId]
+      if (!current) {
+        return state
+      }
+
+      return {
+        messagesByChatId: {
+          ...state.messagesByChatId,
+          [chatId]: current.map((item) =>
+            item.id === messageId ? { ...item, ...patch } : item,
+          ),
+        },
+      }
+    })
+  },
+
+  removeMessage: (chatId, messageId) => {
+    set((state) => {
+      const current = state.messagesByChatId[chatId]
+      if (!current) {
+        return state
+      }
+
+      return {
+        messagesByChatId: {
+          ...state.messagesByChatId,
+          [chatId]: current.filter((item) => item.id !== messageId),
+        },
+      }
+    })
+  },
+
+  upsertMessage: (message) => {
+    set((state) => {
+      const current = state.messagesByChatId[message.chatId] ?? []
+
+      return {
+        messagesByChatId: {
+          ...state.messagesByChatId,
+          [message.chatId]: upsertByCreatedAt(current, message),
+        },
+      }
+    })
+    enrichSenderNames(message.chatId, [message])
   },
 
   prependMessages: (chatId, messages) => {
