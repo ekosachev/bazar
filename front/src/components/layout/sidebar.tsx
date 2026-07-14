@@ -5,6 +5,7 @@ import { ProfileModal } from '@/features/auth/components/profile-modal'
 import { useAuthStore } from '@/features/auth/store/auth-store'
 import { ChatListItem } from '@/features/chats/components/chat-list-item'
 import { CreateChatMenu } from '@/features/chats/components/create-chat-menu'
+import { useUnreadTracker } from '@/features/chats/hooks/use-unread-tracker'
 import { sortChatsByActivity } from '@/features/chats/lib/sort-chats'
 import { useChatsStore } from '@/features/chats/store/chats-store'
 
@@ -32,6 +33,8 @@ export function Sidebar() {
   useEffect(() => {
     loadChats()
   }, [loadChats])
+
+  useUnreadTracker()
 
   return (
     <aside className="flex h-full w-full max-w-sm flex-col border-r border-border bg-bg-elevated">

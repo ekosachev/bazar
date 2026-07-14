@@ -16,11 +16,6 @@ interface MessageApiResponse {
   created_at: string
 }
 
-interface GetChatMessagesApiResponse {
-  messages: MessageApiResponse[]
-  has_more: boolean
-}
-
 function toMessage(response: MessageApiResponse, currentUserId?: string): Message {
   return {
     id: response.id,
@@ -53,14 +48,18 @@ export async function getChatMessages(
   params: GetChatMessagesParams = {},
   currentUserId?: string,
 ): Promise<{ messages: Message[]; hasMore: boolean }> {
-  const response = await apiFetch<GetChatMessagesApiResponse>(
+  // Backend returns a flat array (newest-first), no pagination metadata.
+  const response = await apiFetch<MessageApiResponse[] | null>(
     `/chat/${chatId}/messages${buildQuery(params)}`,
     { method: 'GET' },
   )
 
+  const rawMessages = response ?? []
+  const limit = params.limit ?? rawMessages.length
+
   return {
-    // Backend returns newest-first; reverse to the chronological (oldest-first) order the store expects.
-    messages: response.messages.map((message) => toMessage(message, currentUserId)).reverse(),
-    hasMore: response.has_more,
+    // Reverse to the chronological (oldest-first) order the store expects.
+    messages: rawMessages.map((message) => toMessage(message, currentUserId)).reverse(),
+    hasMore: rawMessages.length >= limit && rawMessages.length > 0,
   }
 }

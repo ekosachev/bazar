@@ -19,6 +19,11 @@ interface ChatsState {
   removeParticipant: (chatId: string, userId: string) => Promise<void>
   updateChat: (chatId: string, payload: { title?: string; description?: string }) => Promise<void>
   setMemberRole: (chatId: string, userId: string, role: 'admin' | 'member') => Promise<void>
+  refreshUnreadCounts: () => Promise<void>
+  incrementUnread: (chatId: string) => void
+  clearUnread: (chatId: string) => void
+  markChatRead: (chatId: string, messageId: string) => Promise<void>
+  setLastMessage: (chatId: string, content: string, createdAt: string) => void
 }
 
 async function loadChatFromMembership(
@@ -44,6 +49,7 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
       )
 
       set((state) => ({ chats, activeChatId: state.activeChatId ?? chats[0]?.id }))
+      void get().refreshUnreadCounts()
     } finally {
       set({ isLoadingChats: false })
     }
@@ -156,5 +162,44 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
   setMemberRole: async (chatId, userId, role) => {
     await chatsApi.setChatMemberRole(chatId, userId, role)
     await get().refreshChat(chatId)
+  },
+
+  refreshUnreadCounts: async () => {
+    const counts = await chatsApi.getUnreadCounts()
+    const countByChatId = new Map(counts.map((item) => [item.chat_id, item.unread_count]))
+
+    set((state) => ({
+      chats: state.chats.map((chat) => ({
+        ...chat,
+        unreadCount: countByChatId.get(chat.id) ?? 0,
+      })),
+    }))
+  },
+
+  incrementUnread: (chatId) => {
+    set((state) => ({
+      chats: state.chats.map((chat) =>
+        chat.id === chatId ? { ...chat, unreadCount: (chat.unreadCount ?? 0) + 1 } : chat,
+      ),
+    }))
+  },
+
+  clearUnread: (chatId) => {
+    set((state) => ({
+      chats: state.chats.map((chat) => (chat.id === chatId ? { ...chat, unreadCount: 0 } : chat)),
+    }))
+  },
+
+  markChatRead: async (chatId, messageId) => {
+    get().clearUnread(chatId)
+    await chatsApi.markChatAsRead(chatId, messageId)
+  },
+
+  setLastMessage: (chatId, content, createdAt) => {
+    set((state) => ({
+      chats: state.chats.map((chat) =>
+        chat.id === chatId ? { ...chat, lastMessage: content, lastMessageAt: createdAt } : chat,
+      ),
+    }))
   },
 }))
