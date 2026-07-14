@@ -51,6 +51,26 @@ function DeleteIcon() {
   )
 }
 
+function DeliveryStatusIcon({ status }: { status: 'sent' | 'read' }) {
+  if (status === 'read') {
+    return (
+      <span
+        className="inline-block size-1.5 rounded-full bg-accent"
+        aria-label="Прочитано"
+        title="Прочитано"
+      />
+    )
+  }
+
+  return (
+    <span
+      className="inline-block size-1.5 rounded-full border border-current opacity-70"
+      aria-label="Отправлено"
+      title="Отправлено"
+    />
+  )
+}
+
 export function MessageBubble({
   message,
   showSender = false,
@@ -217,12 +237,13 @@ export function MessageBubble({
           {!isEditing ? (
             <p
               className={cn(
-                'mt-1 text-right text-caption',
+                'mt-1 flex items-center justify-end gap-1.5 text-caption',
                 isOwn ? 'text-content/70' : 'text-content-faint',
               )}
             >
-              {isEdited(message) ? <span className="mr-1.5">изм.</span> : null}
-              {formatMessageTime(message.createdAt)}
+              {isEdited(message) ? <span>изм.</span> : null}
+              <span>{formatMessageTime(message.createdAt)}</span>
+              {isOwn && message.status ? <DeliveryStatusIcon status={message.status} /> : null}
             </p>
           ) : null}
         </div>
