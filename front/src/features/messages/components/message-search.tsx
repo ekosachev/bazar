@@ -1,4 +1,5 @@
 import { Button, Input } from '@/components/ui'
+import { MESSAGE_SEARCH_MIN_LENGTH } from '@/features/messages/hooks/use-message-search'
 import { formatMessageTime } from '@/features/messages/lib/format-message-time'
 import { cn } from '@/lib/cn'
 import type { Message } from '@/types/chat'
@@ -11,6 +12,8 @@ export interface MessageSearchProps {
   matches?: Message[]
   activeMatchId?: string | null
   onSelectMatch?: (messageId: string) => void
+  isSearching?: boolean
+  error?: string | null
 }
 
 function truncatePreview(content: string, maxLength = 72) {
@@ -29,6 +32,8 @@ export function MessageSearch({
   matches = [],
   activeMatchId,
   onSelectMatch,
+  isSearching = false,
+  error = null,
 }: MessageSearchProps) {
   if (!open) {
     return null
@@ -54,11 +59,19 @@ export function MessageSearch({
 
       {normalizedQuery ? (
         <div className="mt-3 space-y-2">
-          <p className="text-caption text-content-faint">
-            {matches.length ? `Найдено: ${matches.length}` : 'Ничего не найдено'}
-          </p>
+          {normalizedQuery.length < MESSAGE_SEARCH_MIN_LENGTH ? (
+            <p className="text-caption text-content-faint">Введите минимум 2 символа</p>
+          ) : isSearching ? (
+            <p className="text-caption text-content-faint">Ищем…</p>
+          ) : error ? (
+            <p className="text-caption text-danger">{error}</p>
+          ) : (
+            <p className="text-caption text-content-faint">
+              {matches.length ? `Найдено: ${matches.length}` : 'Ничего не найдено'}
+            </p>
+          )}
 
-          {matches.length > 0 ? (
+          {!isSearching && !error && matches.length > 0 ? (
             <ul className="max-h-36 space-y-1 overflow-y-auto">
               {matches.map((message) => (
                 <li key={message.id}>
