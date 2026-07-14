@@ -47,6 +47,8 @@ function fromWireMessage(wire: WireMessage): Message {
     senderId: wire.sender_id,
     content: wire.content,
     createdAt: wire.created_at,
+    updatedAt: wire.updated_at,
+    replyToId: wire.reply_to_id ?? undefined,
   }
 }
 

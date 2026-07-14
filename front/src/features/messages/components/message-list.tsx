@@ -12,6 +12,9 @@ export interface MessageListProps {
   highlightQuery?: string
   emptyText?: string
   activeMatchId?: string | null
+  pendingMessageId?: string | null
+  onEditMessage?: (messageId: string, content: string) => Promise<void>
+  onDeleteMessage?: (messageId: string) => Promise<void>
 }
 
 export function MessageList({
@@ -23,6 +26,9 @@ export function MessageList({
   highlightQuery,
   emptyText = 'Сообщений пока нет',
   activeMatchId,
+  pendingMessageId,
+  onEditMessage,
+  onDeleteMessage,
 }: MessageListProps) {
   useAutoScroll(messages, containerRef)
 
@@ -50,6 +56,9 @@ export function MessageList({
           showSender={showSender}
           highlightQueryText={highlightQuery}
           isActiveMatch={activeMatchId === message.id}
+          isPending={pendingMessageId === message.id}
+          onEdit={onEditMessage}
+          onDelete={onDeleteMessage}
         />
       ))}
     </div>

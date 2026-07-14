@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { IconButton, SearchIcon } from '@/components/ui'
 import { ParticipantsPanel } from '@/features/chats/components/participants-panel'
 import { PeopleIcon } from '@/features/chats/components/people-icon'
@@ -9,11 +9,11 @@ import { MessageComposer } from '@/features/messages/components/message-composer
 import { MessageList } from '@/features/messages/components/message-list'
 import { MessageSearch } from '@/features/messages/components/message-search'
 import { useMarkAsRead } from '@/features/messages/hooks/use-mark-as-read'
+import { useMessageActions } from '@/features/messages/hooks/use-message-actions'
 import { useMessageEvents } from '@/features/messages/hooks/use-message-events'
 import { useMessagePagination } from '@/features/messages/hooks/use-message-pagination'
 import { useMessageSearch } from '@/features/messages/hooks/use-message-search'
 import { useSendMessage } from '@/features/messages/hooks/use-send-message'
-import { filterMessagesByQuery } from '@/features/messages/lib/search-query'
 import {
   useActiveChatMessages,
   useMessagesStore,
@@ -28,6 +28,12 @@ export function ChatArea() {
   const setMessagesActiveChatId = useMessagesStore((state) => state.setActiveChatId)
   const messages = useActiveChatMessages()
   const { sendMessage } = useSendMessage(activeChatId ?? '')
+  const {
+    editMessage,
+    deleteMessage,
+    pendingMessageId,
+    error: actionError,
+  } = useMessageActions(activeChatId ?? '')
   useMessageEvents(activeChatId ?? '')
   useMarkAsRead(activeChatId, messages)
   const { containerRef, handleScroll, isLoadingMore, isLoadingInitial } =
@@ -37,11 +43,13 @@ export function ChatArea() {
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false)
 
   const trimmedSearchQuery = searchQuery.trim()
-  const { matches, activeMatchId, scrollToMessage } = useMessageSearch(messages, searchQuery)
-  const visibleMessages = useMemo(
-    () => filterMessagesByQuery(messages, trimmedSearchQuery),
-    [messages, trimmedSearchQuery],
-  )
+  const {
+    matches,
+    activeMatchId,
+    scrollToMessage,
+    isSearching,
+    error: searchError,
+  } = useMessageSearch(activeChatId, searchQuery)
 
   useEffect(() => {
     setIsSearchOpen(false)
@@ -95,6 +103,8 @@ export function ChatArea() {
         matches={matches}
         activeMatchId={activeMatchId}
         onSelectMatch={scrollToMessage}
+        isSearching={isSearching}
+        error={searchError}
         onClose={() => {
           setIsSearchOpen(false)
           setSearchQuery('')
@@ -102,23 +112,21 @@ export function ChatArea() {
       />
 
       <MessageList
-        messages={visibleMessages}
+        messages={messages}
         showSender={showSender}
         containerRef={containerRef}
         onScroll={handleScroll}
         isLoadingMore={isLoadingMore}
         highlightQuery={trimmedSearchQuery || undefined}
         activeMatchId={activeMatchId}
-        emptyText={
-          isLoadingInitial
-            ? 'Загрузка…'
-            : trimmedSearchQuery
-              ? 'Ничего не найдено'
-              : 'Сообщений пока нет'
-        }
+        pendingMessageId={pendingMessageId}
+        onEditMessage={editMessage}
+        onDeleteMessage={deleteMessage}
+        emptyText={isLoadingInitial ? 'Загрузка…' : 'Сообщений пока нет'}
       />
 
       <footer className="border-t border-border px-5 py-4">
+        {actionError ? <p className="mb-2 text-caption text-danger">{actionError}</p> : null}
         <MessageComposer onSubmit={sendMessage} disabled={!activeChatId} />
       </footer>
 
