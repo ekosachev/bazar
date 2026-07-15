@@ -47,10 +47,11 @@ func main() {
 
 	authRouter := auth.NewAuthRouter(authService)
 	userHandler := user.NewUserHandler(userService)
-	chatHandler := chat.NewChatHandler(chatService)
 
 	hub := ws.NewHub(chatService)
 	go hub.Run()
+
+	chatHandler := chat.NewChatHandler(chatService, hub)
 
 	group := r.Group("/api/v1")
 	{
