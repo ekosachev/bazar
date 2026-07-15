@@ -13,10 +13,13 @@ import (
 	"github.com/ekosachev/bazar/internal/user"
 	"github.com/ekosachev/bazar/internal/ws"
 	"github.com/gin-gonic/gin"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 func main() {
 	r := gin.Default()
+	p := ginprometheus.NewPrometheus("gin")
+	p.Use(r)
 
 	r.GET("/ping", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"message": "pong"}) })
 
@@ -61,5 +64,5 @@ func main() {
 
 	r.GET("/ws", func(ctx *gin.Context) { ws.ServeWs(hub, authService, ctx) })
 
-	r.Run()
+	r.Run(":8080")
 }
