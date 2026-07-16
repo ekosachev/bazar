@@ -45,8 +45,24 @@ services:
       - "5173:5173"
     environment:
       BACKEND_URL: http://backend:8080
+      VITE_FARO_COLLECTOR_URL: http://localhost:12347/collect
     depends_on:
       - backend
+      - alloy
+
+  alloy:
+    image: grafana/alloy
+    container_name: bazar_alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --stability.level=public-preview
+      - /etc/alloy/config.alloy
+    ports:
+      - "12345:12345"
+      - "12347:12347"
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
 
   prometheus:
     image: prom/prometheus
@@ -56,6 +72,7 @@ services:
       - "9090:9090"
     depends_on:
       - backend
+      - alloy
 
   grafana:
     image: grafana/grafana

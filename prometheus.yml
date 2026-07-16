@@ -3,3 +3,8 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
       - targets: ['backend:8080']
+
+  - job_name: 'frontend-faro'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['alloy:12345']
