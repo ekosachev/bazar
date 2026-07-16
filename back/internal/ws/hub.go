@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/ekosachev/bazar/internal/chat"
@@ -57,5 +59,36 @@ func (h *Hub) SendToUser(userID uuid.UUID, message []byte) {
 				delete(clients, client)
 			}
 		}
+	}
+}
+
+func (h *Hub) BroadcastMessageRead(chatID, readerID, messageID uuid.UUID) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	members, err := h.chatService.GetChatMembers(ctx, readerID, chatID)
+	if err != nil {
+		return
+	}
+
+	notification := OutgoingMessage{
+		Type: MessageRead,
+		Payload: MessageReadPayload{
+			ChatID:    chatID,
+			UserID:    readerID,
+			MessageID: messageID,
+		},
+	}
+
+	notificationBytes, err := json.Marshal(notification)
+	if err != nil {
+		return
+	}
+
+	for _, member := range members {
+		if member.UserModelID == readerID {
+			continue
+		}
+		h.SendToUser(member.UserModelID, notificationBytes)
 	}
 }

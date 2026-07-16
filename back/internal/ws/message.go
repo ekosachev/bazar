@@ -13,6 +13,7 @@ const (
 	SendMessage MessageType = "message:send"
 	MessageSent MessageType = "message:sent"
 	NewMessage  MessageType = "message:new"
+	MessageRead MessageType = "message:read"
 )
 
 type IncomingMessage struct {
@@ -40,4 +41,10 @@ type MessageSentPayload struct {
 
 type NewMessagePayload struct {
 	Message message.MessageResponse `json:"message"`
+}
+
+type MessageReadPayload struct {
+	ChatID    uuid.UUID `json:"chat_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	MessageID uuid.UUID `json:"message_id"`
 }

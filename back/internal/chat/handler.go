@@ -12,11 +12,12 @@ import (
 )
 
 type ChatHandler struct {
-	service *ChatService
+	service     *ChatService
+	broadcaster ReadReceiptBroadcaster
 }
 
-func NewChatHandler(service *ChatService) *ChatHandler {
-	return &ChatHandler{service: service}
+func NewChatHandler(service *ChatService, broadcaster ReadReceiptBroadcaster) *ChatHandler {
+	return &ChatHandler{service: service, broadcaster: broadcaster}
 }
 
 func (h *ChatHandler) RegisterRoutes(group *gin.RouterGroup) {
@@ -597,6 +598,12 @@ func (h *ChatHandler) markAsRead(c *gin.Context) {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	if h.broadcaster != nil {
+		h.broadcaster.BroadcastMessageRead(chatID, userID, req.MessageID)
+	}
+
+	c.JSON(http.StatusOK, utils.APIResponse{Success: true})
 }
 
 func (h *ChatHandler) getUnreadCounts(c *gin.Context) {
