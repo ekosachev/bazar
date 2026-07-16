@@ -24,6 +24,8 @@ interface ChatsState {
   clearUnread: (chatId: string) => void
   markChatRead: (chatId: string, messageId: string) => Promise<void>
   setLastMessage: (chatId: string, content: string, createdAt: string) => void
+  hasChat: (chatId: string) => boolean
+  addOrRefreshChat: (chatId: string) => Promise<void>
 }
 
 async function loadChatFromMembership(
@@ -201,5 +203,22 @@ export const useChatsStore = create<ChatsState>((set, get) => ({
         chat.id === chatId ? { ...chat, lastMessage: content, lastMessageAt: createdAt } : chat,
       ),
     }))
+  },
+
+  hasChat: (chatId) => get().chats.some((chat) => chat.id === chatId),
+
+  addOrRefreshChat: async (chatId) => {
+    const currentUserId = useAuthStore.getState().user?.id
+    const chat = await buildChatFromApi(chatId, currentUserId)
+
+    set((state) => {
+      const exists = state.chats.some((item) => item.id === chatId)
+
+      return {
+        chats: exists
+          ? state.chats.map((item) => (item.id === chatId ? chat : item))
+          : [chat, ...state.chats],
+      }
+    })
   },
 }))
